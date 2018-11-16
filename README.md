@@ -16,17 +16,17 @@ Classification Repository](http://www.timeseriesclassification.com
 [Install Docker](https://www.docker.com "Docker homepage")
 
 # Run
-The command below runs a Docker container with tensorflow configured to 
-run on GPUs, mounts deepscent/notebooks and launches Jupyter 
-Notebook.
 ```
 cd deepscent
 ```
-
+The command below runs a Docker container with tensorflow configured to 
+run on GPUs, mounts deepscent/notebooks and deepscent/data and launches 
+Jupyter Notebook.
 ```
 docker run --runtime=nvidia -it \
 --name deepscent \
 -v "$(pwd)"/notebooks:/notebooks/deepscent/notebooks \
+-v "$(pwd)"/data:/notebooks/deepscent/data:ro \
 -p 8888:8888 tensorflow/tensorflow:latest-gpu-py3
 ```
 
