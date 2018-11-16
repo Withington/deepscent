@@ -29,4 +29,5 @@ docker run --runtime=nvidia -it \
 -v "$(pwd)"/data:/notebooks/deepscent/data:ro \
 -p 8888:8888 tensorflow/tensorflow:latest-gpu-py3
 ```
-
+This returns a ULR where you can open the Jupyter Notebook. Navigate 
+to notebooks/deepscent/notebooks and open mlp.ipynb.
