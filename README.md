@@ -9,19 +9,11 @@ Classification Repository](http://www.timeseriesclassification.com
  Anthony Bagnall, Jason Lines, Aaron Bostrom, James Large and Eamonn 
  Keogh, The Great Time Series Classification Bake Off: a Review and 
  Experimental Evaluation of Recent Algorithmic Advances, Data Mining 
- and Knowledge Discovery, 31(3), 2017". [Paper link]
- (https://link.springer.com/article/10.1007/s10618-016-0483-9 
+ and Knowledge Discovery, 31(3), 2017". [Paper link](https://link.springer.com/article/10.1007/s10618-016-0483-9 
  "Bagnall et al. (2017)")
 
 # Prerequisites
 [Install Docker](https://www.docker.com "Docker homepage")
-Download the sample data from the [UEA & UCR Time Series Classification 
-Repository](http://www.timeseriesclassification.com 
-"timeseriesclassification.com"). 
-Store the Adiac dataset in 
-```
-deepscent/data/Adaic
-```
 
 # Run
 The command below runs a Docker container with tensorflow configured to 
@@ -29,6 +21,9 @@ run on GPUs, mounts deepscent/notebooks and launches Jupyter
 Notebook.
 ```
 cd deepscent
+```
+
+```
 docker run --runtime=nvidia -it \
 --name deepscent \
 -v "$(pwd)"/notebooks:/notebooks/deepscent/notebooks \
