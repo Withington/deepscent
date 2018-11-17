@@ -13,6 +13,8 @@ Classification Repository](http://www.timeseriesclassification.com
  "Bagnall et al. (2017)")
 
 # Prerequisites
+TensorFlow - For GPU support, TensorFlow recommends using their Docker 
+image to simplify installation and avoid library conflicts (Linux only).
 [Install Docker](https://www.docker.com "Docker homepage")
 
 # Run
@@ -20,13 +22,13 @@ Classification Repository](http://www.timeseriesclassification.com
 cd deepscent
 ```
 The command below runs a Docker container with tensorflow configured to 
-run on GPUs, mounts deepscent/notebooks and deepscent/data and launches 
-Jupyter Notebook.
+run on GPUs, mounts volumes and launches Jupyter Notebook.
 ```
 docker run --runtime=nvidia -it \
 --name deepscent \
 -v "$(pwd)"/notebooks:/notebooks/deepscent/notebooks \
 -v "$(pwd)"/data:/notebooks/deepscent/data:ro \
+-v "$(pwd)"/logs:/notebooks/deepscent/logs \
 -p 8888:8888 tensorflow/tensorflow:latest-gpu-py3
 ```
 This returns a ULR where you can open the Jupyter Notebook. Navigate 
