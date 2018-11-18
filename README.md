@@ -15,7 +15,7 @@ Classification Repository](http://www.timeseriesclassification.com
 # Prerequisites
 TensorFlow - For GPU support, TensorFlow recommends using their Docker 
 image to simplify installation and avoid library conflicts (Linux only).
-[Install Docker](https://www.docker.com "Docker homepage")
+[Install Docker](https://www.docker.com "Docker homepage").
 
 # Run
 ```
