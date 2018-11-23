@@ -15,7 +15,9 @@ Classification Repository](http://www.timeseriesclassification.com
 # Prerequisites
 TensorFlow - For GPU support, TensorFlow recommends using their Docker 
 image to simplify installation and avoid library conflicts (Linux only).
-[Install Docker](https://www.docker.com "Docker homepage").
+
+Follow [Tensorflow's instuctions](https://www.tensorflow.org/install/gpu "TensorFlow Docker")
+ to install Docker and nvidia-docker.
 
 # Run
 ```
@@ -33,3 +35,15 @@ docker run --runtime=nvidia -it \
 ```
 This returns a ULR where you can open the Jupyter Notebook. Navigate 
 to notebooks/deepscent/notebooks and open mlp.ipynb.
+
+## Alternative - run on CPU
+Alternative docker run options -
+```
+docker run -it \
+--name deepscent \
+-v "$(pwd)"/notebooks:/notebooks/deepscent/notebooks \
+-v "$(pwd)"/data:/notebooks/deepscent/data:ro \
+-v "$(pwd)"/logs:/notebooks/deepscent/logs \
+-p 8888:8888 tensorflow/tensorflow:latest-py3
+```
+
