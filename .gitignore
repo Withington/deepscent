@@ -102,3 +102,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# deepscent specific
+logs/
+!logs/2018-11-18T08:48
