@@ -9,3 +9,6 @@ before_install:
 
 script:
 - docker run deepscent_test
+
+after_success:
+- coveralls
