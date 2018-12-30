@@ -1,4 +1,5 @@
 FROM tensorflow/tensorflow:latest-gpu-py3
-RUN pip install pytest==4.0.2
+COPY requirements.txt requirements.txt
+RUN pip install --requirement requirements.txt
 COPY . src
-CMD [ "pytest"]
+CMD [ "nosetests", "--with-coverage", "--cover-tests"]
