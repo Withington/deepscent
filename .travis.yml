@@ -4,11 +4,11 @@ services:
   - docker
 
 before_install:
-- cd src
-- docker build -t deepscent_test:latest . 
+  - cd src
+  - docker build -t deepscent_test:latest . 
 
 script:
-- docker run -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_BRANCH="$TRAVIS_BRANCH" deepscent_test
+  - docker run -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_BRANCH="$TRAVIS_BRANCH" deepscent_test
 
 after_success:
-- coveralls
+  coveralls
