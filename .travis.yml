@@ -8,7 +8,7 @@ before_install:
 - docker build -t deepscent_test:latest . 
 
 script:
-- docker run deepscent_test
+- docker run -e TRAVIS_JOB_ID="$TRAVIS_JOB_ID" -e TRAVIS_BRANCH="$TRAVIS_BRANCH" deepscent_test
 
 after_success:
 - coveralls
