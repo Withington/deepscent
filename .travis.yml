@@ -1,0 +1,10 @@
+language: python
+
+services:
+  - docker
+
+before_install:
+- cd src
+- docker build -t deepscent_test:latest . 
+- docker run deepscent_test
+
