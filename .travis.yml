@@ -11,8 +11,8 @@ before_install:
   - docker build -t deepscent_test:latest . 
 
 script:
-  - docker run --volume $(pwd)/docker_volume:/notebooks/output --env COVERAGE_FILE=/notebooks/output/.coverage --env TRAVIS_JOB_ID="$TRAVIS_JOB_ID" --env TRAVIS_BRANCH="$TRAVIS_BRANCH" deepscent_test:latest
-  - cp docker_volume/.coverage ./.coverage
+  - docker run --env TRAVIS_JOB_ID="$TRAVIS_JOB_ID" --env TRAVIS_BRANCH="$TRAVIS_BRANCH" deepscent_test:latest
+  - docker cp deepscent_test:notebooks/src/.coverage ./.coverage
   - ls -al
 after_success:
   - coverage combine
