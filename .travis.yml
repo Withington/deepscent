@@ -15,4 +15,5 @@ script:
   - cp docker_volume/.coverage ./.coverage
   - ls -al
 after_success:
-  coveralls
+  - coverage combine
+  - coveralls
