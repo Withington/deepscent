@@ -1,5 +1,5 @@
 [run]
-source = src/basic
+omit = src/tests
 
 ; Run in parallel mode so that coverage can canonicalize the source paths
 ; regardless of whether it runs locally or within a Docker container.
