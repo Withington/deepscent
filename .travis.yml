@@ -4,7 +4,7 @@ python:
 
 
 before_install:
-  - pip install --requirements requirements.txt
+  - pip install -r requirements.txt
 
 script:
   - nosetests --with-coverage
