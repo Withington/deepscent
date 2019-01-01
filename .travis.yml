@@ -15,5 +15,5 @@ script:
   - docker cp deepscent_container:notebooks/src/.coverage ./.coverage
   - ls -al
 after_success:
-  - coverage combine
+  - coverage combine --rcfile=.coveragerc .coverage
   - coveralls
