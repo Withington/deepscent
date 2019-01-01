@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:latest-gpu-py3
+FROM tensorflow/tensorflow:latest-py3
 COPY requirements.txt requirements.txt
 RUN pip install --requirement requirements.txt
 COPY . src

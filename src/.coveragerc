@@ -1,5 +1,6 @@
 [run]
-omit = src/tests
+source = basic/*
+omit = tests/*
 
 ; Run in parallel mode so that coverage can canonicalize the source paths
 ; regardless of whether it runs locally or within a Docker container.
@@ -11,3 +12,7 @@ parallel = True
 source =
   ./
   /notebooks/src/
+
+[report]
+include = basic/*
+

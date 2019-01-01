@@ -12,7 +12,7 @@ before_install:
 
 script:
   - coverage erase
-  - docker run --runtime=nvidia --env TRAVIS_JOB_ID="$TRAVIS_JOB_ID" --env TRAVIS_BRANCH="$TRAVIS_BRANCH" --name deepscent_container deepscent_test:latest
+  - docker run --env TRAVIS_JOB_ID="$TRAVIS_JOB_ID" --env TRAVIS_BRANCH="$TRAVIS_BRANCH" --name deepscent_container deepscent_test:latest
   - docker cp deepscent_container:notebooks/src/.coverage ./.coverage
 
 after_success:
