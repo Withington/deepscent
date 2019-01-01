@@ -2,19 +2,12 @@ language: python
 python:
   - "3.5"
 
-services:
-  - docker
 
 before_install:
-  - pip install coveralls
-  - cd src
-  - docker build -t deepscent_test:latest . 
+  - pip install --requirements requirements.txt
 
 script:
-  - coverage erase
-  - docker run --env TRAVIS_JOB_ID="$TRAVIS_JOB_ID" --env TRAVIS_BRANCH="$TRAVIS_BRANCH" --name deepscent_container deepscent_test:latest
-  - docker cp deepscent_container:notebooks/src/.coverage ./.coverage
+  - nosetests --with-coverage
 
 after_success:
-  - coverage combine --rcfile=.coveragerc .coverage
   - coveralls

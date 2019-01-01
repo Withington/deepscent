@@ -1,0 +1,8 @@
+[run]
+source = src/*
+omit = src/tests/*
+
+[report]
+include = src/*
+omit = src/tests/*
+
