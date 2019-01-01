@@ -12,18 +12,6 @@ def test_env():
     assert tf.VERSION 
     assert tf.keras.__version__ 
 
-
-def test_gpu():
-    has_gpu = tf.test.is_gpu_available(
-        cuda_only=False,
-        min_cuda_compute_capability=None
-    )
-    assert(has_gpu)
-
-
-
-
-
 def main():
     test_env()
 
