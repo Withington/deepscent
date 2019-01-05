@@ -107,3 +107,4 @@ venv.bak/
 logs/
 !logs/2018-11-18T08:48
 notebooks/18.11.06
+notebooks/dataset.csv
