@@ -110,4 +110,5 @@ notebooks/18.11.06
 dataset.csv
 good.pkl
 skipped.pkl
+!data/test_data/class_info/good.pkl
 *private*
