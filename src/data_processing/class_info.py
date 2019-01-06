@@ -4,38 +4,25 @@
 import datetime
 from pathlib import Path
 import argparse
+import configparser
 
 import pandas as pd
 
+# Load config
+config = configparser.ConfigParser()
+config_files = ['src/public_config.ini', 'src/private_config.ini']
+config.read(config_files)
+dog_names = config._sections['dog_names']
+positions = config._sections['positions']
+exclude_dirs = config._sections['exclude_dirs']
+exclude_file_text = config._sections['exclude_file_text']
 
-# Provide list of valid dog names and handle any mis-spellings.
-dog_names = { 
-  'Rex': 'Rex',
-  'rix': 'Rex'
-}
-
-# List of codes used to identify the position of the positive scent-sample.
-positions = { 
-    '_T1': 'T1',
-    '_T2': 'T2',
-    '_T3': 'T3',
-    '_B': 'B'
-}
-    
-# List of directories to exclude.    
-exclude_dirs = {
-    'insert_dir_name': 'Insert reason for exclusion here'
-}
-
-# Exclude files if the file name contains any of the text below.
-exclude_file_text = {
-    'insert_text': 'Insert reason for exclusion here'
-}
 
 
 def dog_name(file_name):
     ''' Return dog name or empty string if not found. '''
     this_dog = ''
+    file_name = str.lower(file_name)
     for name in dog_names:
         if file_name.find(name) >= 0:
             this_dog = dog_names[name]
@@ -46,6 +33,7 @@ def dog_name(file_name):
 def position(file_name):
     ''' Return the position of the positive sample or empty string if not found. '''
     this_position = ''
+    file_name = str.lower(file_name)
     for p in positions:
         if file_name.find(p) >= 0:
             this_position = positions[p]
@@ -65,8 +53,9 @@ def exclude_dir(file):
 def exclude_file(file):  
     ''' Return true if this file should be excluded. '''             
     # Does the file name include text that is in the exclusion list?
+    file_name = str.lower(file.name)
     for t in exclude_file_text:
-        if file.name.find(t) >= 0:
+        if file_name.find(t) >= 0:
             return True   
     return False
 
@@ -147,8 +136,8 @@ def class_info(source, dest=''):
 
         this_position = position(file_name)
         if not this_position:
-            #print('Position not found for file', file_name)
-            files_skipped.append((file, 'position of sample not found'))
+            print('Position not found for file', file_name)
+            files_skipped.append((file, 'position of positive sample not found'))
             continue
 
         run_no, pass_no = run_and_pass_no(file_name)
@@ -168,8 +157,8 @@ def class_info(source, dest=''):
     print('number of skipped_files', skipped_files.count())
     print('The reasons for excluding files are', skipped_files.reason.unique())
     
-    print('The files where reason is - position of sample not found')
-    df = skipped_files['file'][skipped_files['reason']=='position of sample not found']
+    print('The files where reason is - position of positive sample not found')
+    df = skipped_files['file'][skipped_files['reason']=='position of positive sample not found']
     for r in df:
         print(r)
 
