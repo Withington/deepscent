@@ -28,7 +28,7 @@ def test_class_info():
     source = 'data/test_data/raw_data'
     good, skipped = class_info.class_info(source)
     assert(good.shape == (4,6))
-    assert(skipped.shape == (5,2))
+    assert(skipped.shape == (6,2))
 
 def test_raw_data_size():
     input = 'data/test_data/class_info/good.pkl'
