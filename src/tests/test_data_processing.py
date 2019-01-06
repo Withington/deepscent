@@ -23,7 +23,7 @@ def test_timestamp():
     assert(timestamp == expected)
 
 def test_class_info():
-    source = 'notebooks/test_data/raw_data'
+    source = 'data/test_data/raw_data'
     good, skipped = class_info.class_info(source)
     assert(good.shape == (4,6))
     assert(skipped.shape == (5,2))
