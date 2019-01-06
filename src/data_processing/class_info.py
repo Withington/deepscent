@@ -10,8 +10,14 @@ import pandas as pd
 
 # Load config
 config = configparser.ConfigParser()
+config.optionxform=str
 config_files = ['src/public_config.ini', 'src/private_config.ini']
 config.read(config_files)
+print('Excluded directories are')
+print(config._sections['exclude_dirs'])
+print('Excluded file text is')
+print(config._sections['exclude_file_text'])
+
 dog_names = config._sections['dog_names']
 positions = config._sections['positions']
 exclude_dirs = config._sections['exclude_dirs']
@@ -22,7 +28,6 @@ exclude_file_text = config._sections['exclude_file_text']
 def dog_name(file_name):
     ''' Return dog name or empty string if not found. '''
     this_dog = ''
-    file_name = str.lower(file_name)
     for name in dog_names:
         if file_name.find(name) >= 0:
             this_dog = dog_names[name]
@@ -33,7 +38,6 @@ def dog_name(file_name):
 def position(file_name):
     ''' Return the position of the positive sample or empty string if not found. '''
     this_position = ''
-    file_name = str.lower(file_name)
     for p in positions:
         if file_name.find(p) >= 0:
             this_position = positions[p]
@@ -53,9 +57,8 @@ def exclude_dir(file):
 def exclude_file(file):  
     ''' Return true if this file should be excluded. '''             
     # Does the file name include text that is in the exclusion list?
-    file_name = str.lower(file.name)
     for t in exclude_file_text:
-        if file_name.find(t) >= 0:
+        if file.name.find(t) >= 0:
             return True   
     return False
 
