@@ -59,6 +59,7 @@ def exclude_dir(file):
     for d in exclude_dirs:
         if file.match('*/'+d+'/*') or file.match('*/'+d+'/**/*'):
             return True
+    return False
 
 
 def exclude_file(file):  
