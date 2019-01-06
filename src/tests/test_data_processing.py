@@ -25,5 +25,5 @@ def test_timestamp():
 def test_class_info():
     source = 'notebooks/test_data/raw_data'
     good, skipped = class_info.class_info(source)
-    assert(good.shape == (3,6))
-    assert(skipped.shape == (0,2))
+    assert(good.shape == (5,6))
+    assert(skipped.shape == (4,2))
