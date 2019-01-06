@@ -5,8 +5,6 @@ import datetime
 from pathlib import Path
 import argparse
 
-import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 
 
