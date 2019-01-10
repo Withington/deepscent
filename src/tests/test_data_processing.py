@@ -24,6 +24,37 @@ def test_timestamp():
     expected = datetime.datetime(2017, 11, 6, 11, 42)
     assert(timestamp == expected)
 
+def test_alternative_format():
+    file_name = '10-07-2017_Spike_2_2_1-123ppm.csv'
+    timestamp, name, run_no, pass_no, position = \
+        class_info.alternative_format(file_name)
+    expected = datetime.datetime(2017, 7, 10, 00, 00)
+    assert(timestamp == expected)
+    assert(name == 'Spike')
+    assert(run_no == 2)
+    assert(pass_no == 2)
+    assert(position == 'T1')
+
+    file_name = '10-07-2017_Rex_10_1_2-1.1m-newoil123.csv'
+    timestamp, name, run_no, pass_no, position = \
+        class_info.alternative_format(file_name)
+    expected = datetime.datetime(2017, 7, 10, 00, 00)
+    assert(timestamp == expected)
+    assert(name == 'Rex') 
+    assert(run_no == 10)
+    assert(pass_no == 1)
+    assert(position == 'T2')
+
+    file_name = '10-07-2017_Spike_5_1_0.csv'
+    timestamp, name, run_no, pass_no, position = \
+        class_info.alternative_format(file_name)
+    expected = datetime.datetime(2017, 7, 10, 00, 00)
+    assert(timestamp == expected)
+    assert(name == 'Spike') 
+    assert(run_no == 5)
+    assert(pass_no == 1)
+    assert(position == 'B')
+
 def test_class_info():
     source = 'data/test_data/raw_data'
     good, skipped = class_info.class_info(source)

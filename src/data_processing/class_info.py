@@ -109,6 +109,45 @@ def timestamp(file_name):
     return time_stamp
 
 
+
+def alternative_format(file_name):
+
+    # formats
+
+    # 10-07-2017_Rex_2_2_1-123ppm
+    # 10-07-2017_Rex_10_1_2-1.1m-newoil123
+    # 10-07-2017_Spike_5_1_0
+
+    num_underscores = file_name.count('_')
+    if num_underscores != 4:
+        time_stamp = ''
+        return time_stamp
+
+    time_stamp = file_name[:10]
+    time_stamp = datetime.datetime.strptime(time_stamp, '%d-%m-%Y')
+
+    last_m2, last_m1, last = last_three_underscores(file_name)
+    name_str = file_name[11:last_m2]
+    dog = dog_name(name_str)
+
+    run_no, pass_no = run_and_pass_no(file_name)
+
+    pos = file_name[last+1]
+    position = ''
+    if pos == '1':
+        position = 'T1'
+    elif pos == '2':
+        position = 'T2'
+    elif pos == '3':
+        position = 'T3'
+    elif pos == '0':
+        position = 'B'
+
+    return time_stamp, dog, run_no, pass_no, position
+
+
+
+
 def class_info(source, dest=''):
     ''' Get class info from file names. Print this info and print a list of files
         where the info could not be found. '''
@@ -196,3 +235,14 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+    # formats
+
+    # 10-07-2018_Furby_2_2_1-1ppm
+    # 10-07-2018_Furby_10_1_2-2.5m-newoil123
+    # 10-07-2018_Ozzy_5_1_0
+    # 2018_07_17-12_33-Sye_3_1_3-10m-oils3-4-0
+    # 2018_07_17-12_40-Sye_5_1_oils7-8-6
+    # 2018_07_17-12_52-Sye_8_2_oils10-11-T25m
