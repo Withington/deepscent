@@ -111,9 +111,8 @@ def timestamp(file_name):
 
 
 def alternative_format(file_name):
-
-    # formats
-
+    ''' Get 
+    '''
     # 10-07-2017_Rex_2_2_1-123ppm
     # 10-07-2017_Rex_10_1_2-1.1m-newoil123
     # 10-07-2017_Spike_5_1_0
@@ -145,56 +144,59 @@ def alternative_format(file_name):
 
     return time_stamp, dog, run_no, pass_no, position
 
-
+class FileInfo:
+    ''' Store information extracted from file names. '''
+    def __init__(self):
+        self.good = [] # Good files and the class info extracted from them.
+        self.skipped = [] # The files that were skipped and the reason for skipping them.
 
 
 def class_info(source, dest=''):
-    ''' Get class info from file names. Print this info and print a list of files
-        where the info could not be found. '''
+    ''' Get class info from file names in the source dir and save it
+    in the dest dir as good.pkl and skipped.pkl. Print this "good" 
+    info and print a list of "skipped" files where the info could 
+    not be found. Return good and skipped info as Pandas 
+    dataframes. '''
 
-    print(source)
-
-    files_skipped =[]
-    good_files_data = []
-
+    info = FileInfo()
     files = Path(source).rglob('*.csv')
     for file in files:
         file_name = file.name
         
         # Exclude certain directories and files containing certain text.
         if exclude_dir(file):
-            files_skipped.append((file,'directory excluded'))   
+            info.skipped.append((file,'directory excluded'))   
             continue
         if exclude_file(file):
-            files_skipped.append((file,'file excluded'))   
+            info.skipped.append((file,'file excluded'))   
             continue
         
         # Get the dog's name from the file name.
         this_dog = dog_name(file_name)
         if not this_dog:
             #print('Dog name not found for file', file_name)
-            files_skipped.append((file, 'dog name not found'))   
+            info.skipped.append((file, 'dog name not found'))   
             continue
 
         this_position = position(file_name)
         if not this_position:
             print('Position not found for file', file_name)
-            files_skipped.append((file, 'position of positive sample not found'))
+            info.skipped.append((file, 'position of positive sample not found'))
             continue
 
         run_no, pass_no = run_and_pass_no(file_name)
         if not run_no or not pass_no:
             #print('Run or pass number not found for file', file_name)
-            files_skipped.append((file, 'run or pass number not found'))
+            info.skipped.append((file, 'run or pass number not found'))
             continue
 
         time_stamp = timestamp(file_name)
-        good_files_data.append((file, time_stamp, this_dog, run_no, pass_no, this_position))
+        info.good.append((file, time_stamp, this_dog, run_no, pass_no, this_position))
         
     # Print out what was found.
     print('done')
-    good_files = pd.DataFrame(good_files_data, columns=['file', 'timestamp', 'dog', 'run', 'pass', 'position'])
-    skipped_files = pd.DataFrame(files_skipped, columns=['file', 'reason'])
+    good_files = pd.DataFrame(info.good, columns=['file', 'timestamp', 'dog', 'run', 'pass', 'position'])
+    skipped_files = pd.DataFrame(info.skipped, columns=['file', 'reason'])
     print('number of good_files', good_files.count())
     print('number of skipped_files', skipped_files.count())
     print('The reasons for excluding files are', skipped_files.reason.unique())
