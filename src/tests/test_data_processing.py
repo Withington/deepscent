@@ -1,6 +1,8 @@
 import datetime
 import pandas as pd
 
+from hamcrest import assert_that, equal_to
+
 from data_processing import class_info
 from data_processing import import_data
 
@@ -60,6 +62,16 @@ def test_class_info():
     good, skipped = class_info.class_info(source)
     assert(good.shape == (4,6))
     assert(skipped.shape == (6,2))
+    file0 = good.at[0,'file']
+    assert_that(file0.name, equal_to('2017_11_06-13_52-Rex_1_1_T1_.csv'))
+    assert(good.at[0,'dog'] == 'Rex')
+    assert(good.at[0,'run'] == 1)
+    assert(good.at[0,'pass'] == 1)
+    assert(good.at[0,'position'] == 'T1')
+    time = good.at[0,'timestamp']
+    expected = datetime.datetime(2017, 11, 6, 13, 52)
+    assert(time == expected)
+
 
 def test_raw_data_size():
     input = 'data/test_data/class_info/good.pkl'

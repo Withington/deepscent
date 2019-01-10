@@ -109,6 +109,33 @@ def timestamp(file_name):
     return time_stamp
 
 
+def extract_info(file, info):
+    ''' Extract class info from file name and populate the info
+    object. Return False if the expected info can't be extracted. '''
+    file_name = file.name
+    # Get the dog's name from the file name.
+    this_dog = dog_name(file_name)
+    if not this_dog:
+        #print('Dog name not found for file', file_name)
+        info.skipped.append((file, 'dog name not found'))   
+        return False
+
+    this_position = position(file_name)
+    if not this_position:
+        print('Position not found for file', file_name)
+        info.skipped.append((file, 'position of positive sample not found'))
+        return False
+
+    run_no, pass_no = run_and_pass_no(file_name)
+    if not run_no or not pass_no:
+        #print('Run or pass number not found for file', file_name)
+        info.skipped.append((file, 'run or pass number not found'))
+        return False
+
+    time_stamp = timestamp(file_name)
+    info.good.append((file, time_stamp, this_dog, run_no, pass_no, this_position))
+    return True
+
 
 def alternative_format(file_name):
     ''' Get 
@@ -125,7 +152,7 @@ def alternative_format(file_name):
     time_stamp = file_name[:10]
     time_stamp = datetime.datetime.strptime(time_stamp, '%d-%m-%Y')
 
-    last_m2, last_m1, last = last_three_underscores(file_name)
+    last_m2, __, last = last_three_underscores(file_name)
     name_str = file_name[11:last_m2]
     dog = dog_name(name_str)
 
@@ -160,9 +187,7 @@ def class_info(source, dest=''):
 
     info = FileInfo()
     files = Path(source).rglob('*.csv')
-    for file in files:
-        file_name = file.name
-        
+    for file in files:       
         # Exclude certain directories and files containing certain text.
         if exclude_dir(file):
             info.skipped.append((file,'directory excluded'))   
@@ -170,29 +195,9 @@ def class_info(source, dest=''):
         if exclude_file(file):
             info.skipped.append((file,'file excluded'))   
             continue
+        extract_info(file, info)
         
-        # Get the dog's name from the file name.
-        this_dog = dog_name(file_name)
-        if not this_dog:
-            #print('Dog name not found for file', file_name)
-            info.skipped.append((file, 'dog name not found'))   
-            continue
 
-        this_position = position(file_name)
-        if not this_position:
-            print('Position not found for file', file_name)
-            info.skipped.append((file, 'position of positive sample not found'))
-            continue
-
-        run_no, pass_no = run_and_pass_no(file_name)
-        if not run_no or not pass_no:
-            #print('Run or pass number not found for file', file_name)
-            info.skipped.append((file, 'run or pass number not found'))
-            continue
-
-        time_stamp = timestamp(file_name)
-        info.good.append((file, time_stamp, this_dog, run_no, pass_no, this_position))
-        
     # Print out what was found.
     print('done')
     good_files = pd.DataFrame(info.good, columns=['file', 'timestamp', 'dog', 'run', 'pass', 'position'])
