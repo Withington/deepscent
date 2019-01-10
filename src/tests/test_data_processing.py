@@ -1,3 +1,4 @@
+from pathlib import Path
 import datetime
 import pandas as pd
 
@@ -57,11 +58,16 @@ def test_alternative_format():
     assert(pass_no == 1)
     assert(position == 'B')
 
+def test_alt_dir():
+    path = Path('do/alt_format/10-07-2017_Spike_5_1_0.csv')
+    assert(class_info.alternative_format_dir(path))
+
 def test_class_info():
     source = 'data/test_data/raw_data'
     good, skipped = class_info.class_info(source)
-    assert(good.shape == (4,6))
-    assert(skipped.shape == (6,2))
+    assert_that(good.shape, equal_to((8,6)))
+    assert_that(skipped.shape, equal_to((6,2)))
+
     file0 = good.at[0,'file']
     assert_that(file0.name, equal_to('2017_11_06-13_52-Rex_1_1_T1_.csv'))
     assert(good.at[0,'dog'] == 'Rex')

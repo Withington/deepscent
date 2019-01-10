@@ -22,7 +22,7 @@ dog_names = config._sections['dog_names']
 positions = config._sections['positions']
 exclude_dirs = config._sections['exclude_dirs']
 exclude_file_text = config._sections['exclude_file_text']
-
+alt_format1_dirs = config._sections['alt_format1_dirs']
 
 
 def dog_name(file_name):
@@ -50,6 +50,16 @@ def exclude_dir(file):
     # Is this directory in the exclusion list?
     for d in exclude_dirs:
         if file.match('*/'+d+'/*') or file.match('*/'+d+'/**/*'):
+            return True
+    return False
+
+
+def alternative_format_dir(file):
+    ''' Return true if this file is in a dir that holds files
+    with names in an alternative format. '''   
+    # Is this directory in the list?
+    for d in alt_format1_dirs:
+        if d in file.parents._parts:
             return True
     return False
 
@@ -136,9 +146,33 @@ def extract_info(file, info):
     info.good.append((file, time_stamp, this_dog, run_no, pass_no, this_position))
     return True
 
+def alt_extract_info(file, info):
+    ''' Extract class info from a file name in the alternative format1.
+    Populate the info object. Return False if the expected info can't 
+    be extracted. '''
+    file_name = file.name
+    timestamp, dog, run_no, pass_no, position = \
+        alternative_format(file_name)
+
+    if not dog:
+        info.skipped.append((file, 'dog name not found'))   
+        return False
+
+    if not position:
+        print('Position not found for file', file_name)
+        info.skipped.append((file, 'position of positive sample not found'))
+        return False
+
+    run_no, pass_no = run_and_pass_no(file_name)
+    if not run_no or not pass_no:
+        info.skipped.append((file, 'run or pass number not found'))
+        return False
+
+    info.good.append((file, timestamp, dog, run_no, pass_no, position))
+    return True
 
 def alternative_format(file_name):
-    ''' Get 
+    ''' Get class info from a file name that is this alternative format.
     '''
     # 10-07-2017_Rex_2_2_1-123ppm
     # 10-07-2017_Rex_10_1_2-1.1m-newoil123
@@ -195,8 +229,11 @@ def class_info(source, dest=''):
         if exclude_file(file):
             info.skipped.append((file,'file excluded'))   
             continue
-        extract_info(file, info)
-        
+
+        if not alternative_format_dir(file):
+            extract_info(file, info)
+        else:
+            alt_extract_info(file, info)
 
     # Print out what was found.
     print('done')
@@ -245,11 +282,3 @@ if __name__ == "__main__":
 
 
 
-    # formats
-
-    # 10-07-2018_Furby_2_2_1-1ppm
-    # 10-07-2018_Furby_10_1_2-2.5m-newoil123
-    # 10-07-2018_Ozzy_5_1_0
-    # 2018_07_17-12_33-Sye_3_1_3-10m-oils3-4-0
-    # 2018_07_17-12_40-Sye_5_1_oils7-8-6
-    # 2018_07_17-12_52-Sye_8_2_oils10-11-T25m
