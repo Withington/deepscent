@@ -13,10 +13,6 @@ config = configparser.ConfigParser()
 config.optionxform=str
 config_files = ['src/public_config.ini', 'src/private_config.ini']
 config.read(config_files)
-print('Excluded directories are')
-print(config._sections['exclude_dirs'])
-print('Excluded file text is')
-print(config._sections['exclude_file_text'])
 
 dog_names = config._sections['dog_names']
 positions = config._sections['positions']
@@ -154,6 +150,10 @@ def alt_extract_info(file, info):
     timestamp, dog, run_no, pass_no, position = \
         alternative_format(file_name)
 
+    if not timestamp:
+        info.skipped.append((file, 'time stamp could not be extracted (alt format 1 expected)'))   
+        return False
+
     if not dog:
         info.skipped.append((file, 'dog name not found'))   
         return False
@@ -178,10 +178,10 @@ def alternative_format(file_name):
     # 10-07-2017_Rex_10_1_2-1.1m-newoil123
     # 10-07-2017_Spike_5_1_0
 
+    time_stamp = dog = run_no = pass_no = position =''
     num_underscores = file_name.count('_')
     if num_underscores != 4:
-        time_stamp = ''
-        return time_stamp
+        return time_stamp, dog, run_no, pass_no, position
 
     time_stamp = file_name[:10]
     time_stamp = datetime.datetime.strptime(time_stamp, '%d-%m-%Y')
@@ -212,7 +212,7 @@ class FileInfo:
         self.skipped = [] # The files that were skipped and the reason for skipping them.
 
 
-def class_info(source, dest=''):
+def parse_filenames(source, dest=''):
     ''' Get class info from file names in the source dir and save it
     in the dest dir as good.pkl and skipped.pkl. Print this "good" 
     info and print a list of "skipped" files where the info could 
@@ -266,6 +266,8 @@ def class_info(source, dest=''):
         good_files.to_pickle(save_good)
         skipped_files.to_pickle(save_skipped)
 
+    print('number of good_files', good_files.count())
+    print('number of skipped_files', skipped_files.count())
     return good_files, skipped_files
 
 
@@ -275,7 +277,7 @@ def main():
     parser.add_argument('--dest', default='',
         help='destination directory for saving the class information files')
     args = parser.parse_args()
-    class_info(args.source, args.dest)
+    parse_filenames(args.source, args.dest)
 
 if __name__ == "__main__":
     main()

@@ -112,3 +112,4 @@ good.pkl
 skipped.pkl
 !data/test_data/class_info/good.pkl
 *private*
+user_config.ini

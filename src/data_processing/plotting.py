@@ -44,7 +44,7 @@ def plot_dataset(input):
 
 def main():
     parser = argparse.ArgumentParser(description='Print information and plots that describe the input file')
-    parser.add_argument('type', help='type of data file - raw or dataset', choices=['raw', 'dataset'])
+    parser.add_argument('type', help='type of data file - raw or dataset', type=str, choices=['raw', 'dataset'])
     parser.add_argument('input', help='input path to a csv file')
     args = parser.parse_args()
     if args.type == 'raw':

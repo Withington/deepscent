@@ -14,7 +14,7 @@ def data_size(input):
     points in any file. '''
     good = pd.read_pickle(Path(input))
     n = good.shape[0]
-    print('number of good_files', n)
+    print('number of input files:', n)
     max = 0
     max_file = ''
     size_info = []
@@ -40,28 +40,33 @@ def data_size(input):
     print(df.head())
     return max
 
-def import_data(input, target='', max_cols=11000):
-    ''' Read in the list of good files. For each file, get the three pressure
-    sensor data samples, add class information (e.g. +ve or -ve scent sample) 
-    to the first column(s). Save the entire dataset in a csv file. '''
-    save = False
-    if target:
-        save = True
-        output_file = Path(target)
+def create_dataset(input, target='', max_cols=12000, verbose=False):
+    ''' Read in the list of good files, input in a pkl file. 
+    For each file, get the three pressure sensor data samples, 
+    add class information (e.g. +ve or -ve scent sample) 
+    to the first column(s). Save the entire dataset in
+    the target file. 
+    Return the shape of the dataset. '''
+
+    print('Loading', input)
     good = pd.read_pickle(Path(input))
+
+    if verbose:
+        data_size(input)
+
     n = good.shape[0]
     class_cols = 1 # How many columns will be added to hold class data.
-    print('Number of raw data input files:', n)
 
     data = np.empty((n*3,max_cols+class_cols))
-    for i in range(0,n):
+    meta = list()
+    meta_header = 'filename,timestamp,dog,run,pass,positive_position,sensor_number,class'
+    for i in range(n):
         file = good.at[i,'file']
         d_i = np.loadtxt(file,delimiter=',')
         assert(d_i.shape[0]==3)
         assert(d_i.shape[1]>100)
         # Set the number of columns by truncating or padding with zeros.
         cols = d_i.shape[1]
-        print(i)
         if cols > max_cols:
             d_i = d_i[:,:max_cols]
         elif cols < max_cols:
@@ -72,12 +77,35 @@ def import_data(input, target='', max_cols=11000):
         d_i = np.hstack((classes_i,d_i))
         # Add this data to the data set.
         data[i*3:i*3+3] = d_i
+        # Get the meta data and create three rows of it.
+        meta_0 = [good.at[i,'file'].name, \
+                    good.at[i,'timestamp'], \
+                    good.at[i,'dog'], \
+                    good.at[i,'run'], \
+                    good.at[i,'pass'], \
+                    good.at[i,'position'],
+                    0,                  # sensor number
+                    classes_i[0][0] ]   # class 
+        meta.append(meta_0)
+        meta_1 = list(meta_0)
+        meta_1[6] = 1                   # sensor number
+        meta_1[7]  = classes_i[1][0]    # class 
+        meta.append(meta_1)
+        meta_2 = list(meta_0)
+        meta_2[6] = 2                   # sensor number
+        meta_2[7] = classes_i[2][0]     # class
+        meta.append(meta_2)
 
-    print(data.shape)
-    if save:
-        print('Saving data to', output_file)
+    if target:
+        output_file = Path(target)
+        output_file_meta = Path(str(output_file.parent) + \
+            '/' + output_file.stem + '_meta.csv')
+        print('Saving data to', output_file, 'and', output_file_meta)
         np.savetxt(output_file, data, delimiter=',')
+        np.savetxt(output_file_meta, meta, header=meta_header, fmt='%s', delimiter=',')
 
+    print('Number of time series data points used:', max_cols)
+    print('Dataset shape:', data.shape) 
     return data.shape
 
 def class_vector(position):
@@ -92,11 +120,12 @@ def class_vector(position):
 
 def main():
     parser = argparse.ArgumentParser(description='Read the raw data files and create a single dataset')
-    parser.add_argument('input', help='input file path - a pkl file listing all of the files')
-    parser.add_argument('--target', help='target file path to save the dataset to csv file', default='')
-    parser.add_argument('--max_cols', type=int, help='maximum number of timeseries datapoints to use', default='')   
+    parser.add_argument('input', help='input file - a pkl file listing all of the files')
+    parser.add_argument('--target', help='target csv file for saving the dataset', default='')
+    parser.add_argument('--max_cols', type=int, help='maximum number of timeseries datapoints to use', default=12000)   
+    parser.add_argument('--verbose', type=bool, help='print information about the files', default=False)   
     args = parser.parse_args()
-    import_data(args.input, args.target, args.max_cols)
+    create_dataset(args.input, args.target, args.max_cols, args.verbose)
 
 if __name__ == "__main__":
     main()
