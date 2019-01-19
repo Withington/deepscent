@@ -5,10 +5,11 @@ import configparser
 import numpy as np
 import pandas as pd
 
-from hamcrest import assert_that, equal_to
+from hamcrest import assert_that, equal_to, is_
 
 from data_processing import class_info
 from data_processing import import_data
+from data_processing import split_data
 
 
 def test_position():
@@ -136,7 +137,9 @@ def compare_data(raw_data_path, dataset_file, meta_file, i=None):
     loaded_meta = np.loadtxt(meta_file, dtype=str, delimiter=',')
     # Select a row at random.
     rows = loaded_meta.shape[0]
-    if not i:
+    if i:
+        assert(i<rows)
+    else:
         i = np.random.randint(0,rows)
     filename = loaded_meta[i][0]
     files = raw_data_path.rglob('**/'+filename)
@@ -183,4 +186,73 @@ def test_dataset_random_user():
     dataset_file = Path(config.get('files', 'dataset'))
     meta_file = Path(config.get('files', 'meta'))
     compare_data(raw_data_path, dataset_file, meta_file)
+
+def test_split_data():
+    ''' Test randomly splitting the dataset and meta data into two sets - training and test sets '''
+    config = configparser.ConfigParser()
+    config.optionxform=str
+    config_files = ['src/public_config.ini', 'src/private_config.ini', 'src/user_config.ini']
+    config.read(config_files)
+    if False:
+        raw_data_dir = Path(config.get('files', 'raw_data_dir'))
+        dataset_file = config.get('files', 'dataset')
+        meta_file = config.get('files', 'meta')
+    else:
+        raw_data_dir = 'data/test_data/raw_data'
+        dataset_file = 'data/test_data/datasets/test_output_dataset.csv'
+        meta_file = 'data/test_data/datasets/test_output_dataset_meta.csv'
+    dest = 'data/test_data/datasets'
+    label = 'test_output_'
+    split_data.split(dataset_file, meta_file, 0.2, dest=dest, label=label)
+    expected = Path(dest+'/'+label+'dataset_train.csv')
+    assert_that(expected.exists(), is_(True))
+    # Reload data and compare against original
+    i = 2
+    raw_data_path = Path(raw_data_dir)
+    dataset_file = Path('data/test_data/datasets/test_output_dataset_train.csv')
+    meta_file = Path('data/test_data/datasets/test_output_meta_train.csv')
+    compare_data(raw_data_path, dataset_file, meta_file, i)
+    # Test the _test set
+    dataset_file = Path('data/test_data/datasets/test_output_dataset_test.csv')
+    meta_file = Path('data/test_data/datasets/test_output_meta_test.csv')
+    compare_data(raw_data_path, dataset_file, meta_file, i)
+
+
+
+def test_split_data_reload():
+    ''' Test the training and test sets against the raw data 
+    in the files specified by the public config '''
+    config = configparser.ConfigParser()
+    config.optionxform=str
+    config_files = ['src/public_config.ini']
+    config.read(config_files)
+    # Load training and test data and compare against original
+    i = 2
+    raw_data_path = Path(config.get('files', 'raw_data_dir'))
+    dataset_file = Path(config.get('files', 'dataset_train'))
+    meta_file = Path(config.get('files', 'meta_train'))
+    compare_data(raw_data_path, dataset_file, meta_file, i)
+    # Test the _test set
+    dataset_file = Path(config.get('files', 'dataset_test'))
+    meta_file = Path(config.get('files', 'meta_test'))
+    compare_data(raw_data_path, dataset_file, meta_file, i)
+
+
+# def test_split_data_user():
+#     ''' Test the training and test sets against the raw data 
+#     in the files specified by the user config '''
+#     config = configparser.ConfigParser()
+#     config.optionxform=str
+#     config_files = ['src/public_config.ini', 'src/private_config.ini', 'src/user_config.ini']
+#     config.read(config_files)
+#     # Load training and test data and compare against original
+#     i = 2
+#     raw_data_path = Path(config.get('files', 'raw_data_dir'))
+#     dataset_file = Path(config.get('files', 'dataset_train'))
+#     meta_file = Path(config.get('files', 'meta_train'))
+#     compare_data(raw_data_path, dataset_file, meta_file, i)
+#     # Test the _test set
+#     dataset_file = Path(config.get('files', 'dataset_test'))
+#     meta_file = Path(config.get('files', 'meta_test'))
+#     compare_data(raw_data_path, dataset_file, meta_file, i)
 
