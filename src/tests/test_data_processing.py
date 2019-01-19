@@ -147,8 +147,7 @@ def compare_data(raw_data_path, dataset_file, meta_file, i=None):
     # Find the corresponding raw data file and test dataset against it.
     count = 0
     for f in files:
-        print('i = ', i)
-        print('Testing file', f)
+        print('Testing ', dataset_file.name, 'row', i, 'against', f)
         count = count+1
         assert_that(count, equal_to(1))
         raw_loaded = np.loadtxt(f, delimiter=',')  
@@ -189,34 +188,13 @@ def test_dataset_random_user():
 
 def test_split_data():
     ''' Test randomly splitting the dataset and meta data into two sets - training and test sets '''
-    config = configparser.ConfigParser()
-    config.optionxform=str
-    config_files = ['src/public_config.ini', 'src/private_config.ini', 'src/user_config.ini']
-    config.read(config_files)
-    if False:
-        raw_data_dir = Path(config.get('files', 'raw_data_dir'))
-        dataset_file = config.get('files', 'dataset')
-        meta_file = config.get('files', 'meta')
-    else:
-        raw_data_dir = 'data/test_data/raw_data'
-        dataset_file = 'data/test_data/datasets/test_output_dataset.csv'
-        meta_file = 'data/test_data/datasets/test_output_dataset_meta.csv'
+    dataset_file = 'data/test_data/datasets/test_output_dataset.csv'
+    meta_file = 'data/test_data/datasets/test_output_dataset_meta.csv'
     dest = 'data/test_data/datasets'
     label = 'test_output_'
     split_data.split(dataset_file, meta_file, 0.2, dest=dest, label=label)
     expected = Path(dest+'/'+label+'dataset_train.csv')
     assert_that(expected.exists(), is_(True))
-    # Reload data and compare against original
-    i = 2
-    raw_data_path = Path(raw_data_dir)
-    dataset_file = Path('data/test_data/datasets/test_output_dataset_train.csv')
-    meta_file = Path('data/test_data/datasets/test_output_meta_train.csv')
-    compare_data(raw_data_path, dataset_file, meta_file, i)
-    # Test the _test set
-    dataset_file = Path('data/test_data/datasets/test_output_dataset_test.csv')
-    meta_file = Path('data/test_data/datasets/test_output_meta_test.csv')
-    compare_data(raw_data_path, dataset_file, meta_file, i)
-
 
 
 def test_split_data_reload():
@@ -232,27 +210,33 @@ def test_split_data_reload():
     dataset_file = Path(config.get('files', 'dataset_train'))
     meta_file = Path(config.get('files', 'meta_train'))
     compare_data(raw_data_path, dataset_file, meta_file, i)
+    compare_data(raw_data_path, dataset_file, meta_file) # Random i  
     # Test the _test set
     dataset_file = Path(config.get('files', 'dataset_test'))
     meta_file = Path(config.get('files', 'meta_test'))
     compare_data(raw_data_path, dataset_file, meta_file, i)
+    compare_data(raw_data_path, dataset_file, meta_file)  # Random i 
 
 
-# def test_split_data_user():
-#     ''' Test the training and test sets against the raw data 
-#     in the files specified by the user config '''
-#     config = configparser.ConfigParser()
-#     config.optionxform=str
-#     config_files = ['src/public_config.ini', 'src/private_config.ini', 'src/user_config.ini']
-#     config.read(config_files)
-#     # Load training and test data and compare against original
-#     i = 2
-#     raw_data_path = Path(config.get('files', 'raw_data_dir'))
-#     dataset_file = Path(config.get('files', 'dataset_train'))
-#     meta_file = Path(config.get('files', 'meta_train'))
-#     compare_data(raw_data_path, dataset_file, meta_file, i)
-#     # Test the _test set
-#     dataset_file = Path(config.get('files', 'dataset_test'))
-#     meta_file = Path(config.get('files', 'meta_test'))
-#     compare_data(raw_data_path, dataset_file, meta_file, i)
+def test_split_data_user():
+    ''' Test the training and test sets against the raw data 
+    in the files specified by the user config '''
+    config = configparser.ConfigParser()
+    config.optionxform=str
+    config_files = ['src/public_config.ini', 'src/private_config.ini', 'src/user_config.ini']
+    config.read(config_files)
+    # Load training and test data and compare against original
+    i = 4
+    raw_data_path = Path(config.get('files', 'raw_data_dir'))
+    dataset_file = Path(config.get('files', 'dataset_train'))
+    meta_file = Path(config.get('files', 'meta_train'))
+    print('Testing dataset', dataset_file, 'and', meta_file)
+    compare_data(raw_data_path, dataset_file, meta_file, i)
+    compare_data(raw_data_path, dataset_file, meta_file)  # Random i 
+    # Test the _test set
+    dataset_file = Path(config.get('files', 'dataset_test'))
+    meta_file = Path(config.get('files', 'meta_test'))
+    print('Testing dataset', dataset_file, 'and', meta_file)
+    compare_data(raw_data_path, dataset_file, meta_file, i)
+    compare_data(raw_data_path, dataset_file, meta_file)  # Random i 
 

@@ -24,19 +24,6 @@ def split(dataset_file, meta_file, test_split, dest='', label=''):
     np.random.shuffle(selector)
     dataset_train, dataset_test, meta_train, meta_test = \
         train_test_split(loaded_dataset, loaded_meta, test_size=test_split, random_state=seed)
-
-    # assert(dev_n + test_n < n)
-    # train_n = n - dev_n - test_n
-    # dataset_train = loaded_dataset[:train_n]
-    # dataset_dev = loaded_dataset[train_n:train_n+dev_n]
-    # dataset_test = loaded_dataset[train_n+dev_n:]
-    # meta_train = loaded_meta[:train_n]
-    # meta_dev = loaded_meta[train_n:train_n+dev_n]
-    # meta_test = loaded_meta[train_n+dev_n:]   
-    print('meta_train')
-    print(meta_train)
-    print('meta_test')
-    print(meta_test)
     # Save to file
     if dest:
         dataset_train_name = label + 'dataset_train.csv'
@@ -47,9 +34,6 @@ def split(dataset_file, meta_file, test_split, dest='', label=''):
             meta_header = f.readline()    
         meta_header = meta_header.strip('\n')  
         meta_header = meta_header.strip('#')  
-        print('print header')
-        print(meta_header)   
-        print('done')
         print('Saving data to:')
         print(Path(dest+'/'+dataset_train_name).name)
         np.savetxt(Path(dest+'/'+dataset_train_name), dataset_train, delimiter=',')
@@ -69,7 +53,7 @@ def main():
     parser = argparse.ArgumentParser(description='Split a dataset into training and test datasets')
     parser.add_argument('input_file', help='input dataset csv file')
     parser.add_argument('input_meta', help='input dataset meta data csv file')    
-    parser.add_argument('test_split', type=int, help='proportion of data samples to split out into the test set (0 to 1)')    
+    parser.add_argument('test_split', type=float, help='proportion of data samples to split out into the test set (0 to 1)')    
     parser.add_argument('--dest', help='destination for saving the training and test datasets and meta data', default='') 
     parser.add_argument('--label', help='label the saved files with this prefix', default='')    
     args = parser.parse_args()
