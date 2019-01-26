@@ -15,6 +15,8 @@ Classification Repository](http://www.timeseriesclassification.com
  Experimental Evaluation of Recent Algorithmic Advances, Data Mining 
  and Knowledge Discovery, 31(3), 2017". [Paper link.](https://link.springer.com/article/10.1007/s10618-016-0483-9 
  "Bagnall et al. (2017)")
+ 
+ Dummy data is used to represent cancer detection dogs' data. It in no way reflects the true data collected.
 
 # Prerequisites
 TensorFlow - For GPU support, TensorFlow recommends using their Docker 
