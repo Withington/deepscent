@@ -11,6 +11,7 @@ import pandas as pd
 
 def plot_file(input):
     ''' Plot the data in a single raw data csv file. '''
+    print('Input file:', input)
     file = Path(input)
     df = pd.read_csv(file, header=None)
     df = df.T
@@ -19,8 +20,9 @@ def plot_file(input):
     plt.show()
 
 def plot_dataset(input):
-    ''' Analyse and plot the input dataset csv file. '''
-    df = pd.read_csv(input, header=None)
+    ''' Analyse and plot the input dataset txt file. '''
+    print('Input file:', input)
+    df = pd.read_csv(Path(input), sep=' ', header=None)
     print('Input data shape:', df.shape)
     print('min is',np.min(df.iloc[:][1:].values))
     print('max is',np.max(df.iloc[:][1:].values))
@@ -45,11 +47,13 @@ def plot_dataset(input):
 def main():
     parser = argparse.ArgumentParser(description='Print information and plots that describe the input file')
     parser.add_argument('type', help='type of data file - raw or dataset', type=str, choices=['raw', 'dataset'])
-    parser.add_argument('input', help='input path to a csv file')
+    parser.add_argument('input', help='input path to a raw data csv file or a dataset txt file')
     args = parser.parse_args()
     if args.type == 'raw':
         plot_file(args.input)
     else:
         plot_dataset(args.input)
 
-main()
+
+if __name__ == "__main__":
+    main()

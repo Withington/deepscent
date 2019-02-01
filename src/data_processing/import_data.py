@@ -3,6 +3,7 @@
 
 from pathlib import Path
 import argparse
+import datetime
 
 import numpy as np
 import pandas as pd
@@ -40,6 +41,7 @@ def data_size(input):
     print(df.head())
     return max
 
+
 def create_dataset(input, target='', max_cols=12000, verbose=False):
     ''' Read in the list of good files, input in a pkl file. 
     For each file, get the three pressure sensor data samples, 
@@ -59,7 +61,7 @@ def create_dataset(input, target='', max_cols=12000, verbose=False):
 
     data = np.empty((n*3,max_cols+class_cols))
     meta = list()
-    meta_header = 'filename,timestamp,dog,run,pass,positive_position,sensor_number,class'
+    meta_header = 'filename,date,time,dog,run,pass,positive_position,sensor_number,class'
     for i in range(n):
         file = good.at[i,'file']
         d_i = np.loadtxt(file,delimiter=',')
@@ -78,8 +80,10 @@ def create_dataset(input, target='', max_cols=12000, verbose=False):
         # Add this data to the data set.
         data[i*3:i*3+3] = d_i
         # Get the meta data and create three rows of it.
+        time_stamp = good.at[i,'timestamp']
         meta_0 = [good.at[i,'file'].name, \
-                    good.at[i,'timestamp'], \
+                    time_stamp.date(), \
+                    time_stamp.time(), \
                     good.at[i,'dog'], \
                     good.at[i,'run'], \
                     good.at[i,'pass'], \
@@ -88,20 +92,20 @@ def create_dataset(input, target='', max_cols=12000, verbose=False):
                     classes_i[0][0] ]   # class 
         meta.append(meta_0)
         meta_1 = list(meta_0)
-        meta_1[6] = 1                   # sensor number
-        meta_1[7]  = classes_i[1][0]    # class 
+        meta_1[7] = 1                   # sensor number
+        meta_1[8]  = classes_i[1][0]    # class 
         meta.append(meta_1)
         meta_2 = list(meta_0)
-        meta_2[6] = 2                   # sensor number
-        meta_2[7] = classes_i[2][0]     # class
+        meta_2[7] = 2                   # sensor number
+        meta_2[8] = classes_i[2][0]     # class
         meta.append(meta_2)
 
     if target:
         output_file = Path(target)
         output_file_meta = Path(str(output_file.parent) + \
-            '/' + output_file.stem + '_meta.csv')
+            '/' + output_file.stem + '_metaset.txt')
         print('Saving data to', output_file, 'and', output_file_meta)
-        np.savetxt(output_file, data, delimiter=',')
+        np.savetxt(output_file, data, fmt='%f', delimiter=' ')
         np.savetxt(output_file_meta, meta, header=meta_header, fmt='%s', delimiter=',')
 
     print('Number of time series data points used:', max_cols)
@@ -121,7 +125,7 @@ def class_vector(position):
 def main():
     parser = argparse.ArgumentParser(description='Read the raw data files and create a single dataset')
     parser.add_argument('input', help='input file - a pkl file listing all of the files')
-    parser.add_argument('--target', help='target csv file for saving the dataset', default='')
+    parser.add_argument('--target', help='target txt file for saving the dataset', default='')
     parser.add_argument('--max_cols', type=int, help='maximum number of timeseries datapoints to use', default=12000)   
     parser.add_argument('--verbose', type=bool, help='print information about the files', default=False)   
     args = parser.parse_args()

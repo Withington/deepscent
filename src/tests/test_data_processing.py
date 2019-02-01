@@ -104,25 +104,26 @@ def test_import_data_save():
         dest = 'data/test_data/class_info'
         class_info.parse_filenames(source, dest)
     input = 'data/test_data/class_info/good.pkl'
-    target = Path('data/test_data/datasets/test_output_dataset.csv')
-    target_meta = Path('data/test_data/datasets/test_output_dataset_meta.csv') 
+    target = Path('data/test_data/datasets/test_output_dataset.txt')
+    target_meta = Path('data/test_data/datasets/test_output_dataset_metaset.txt') 
     cols = 6000
     expected_good = 8
     dataset_shape = import_data.create_dataset(input, target, cols)
     assert_that(dataset_shape, equal_to((expected_good*3,cols+1)))
     # Test meta data
-    loaded_meta = np.loadtxt(target_meta, dtype=str, delimiter=',')
+    loaded_meta = np.genfromtxt(target_meta, delimiter=',', dtype=None, encoding=None)
     assert_that(loaded_meta[10][0], equal_to('2017_11_06-11_38-Rex_5_2_T3.csv'))
     expected_time = datetime.datetime(2017, 11, 6, 11, 38)
-    assert_that(loaded_meta[10][1], equal_to(str(expected_time)))
-    assert_that(loaded_meta[10][2], equal_to('Rex'))
-    assert_that(loaded_meta[10][3], equal_to('5'))
-    assert_that(loaded_meta[10][4], equal_to('2'))
-    assert_that(loaded_meta[10][5], equal_to('T3'))
-    assert_that(loaded_meta[10][6], equal_to('1'))
-    assert_that(loaded_meta[10][7], equal_to('0')) 
+    assert_that(loaded_meta[10][1], equal_to(str(expected_time.date())))
+    assert_that(loaded_meta[10][2], equal_to(str(expected_time.time())))
+    assert_that(loaded_meta[10][3], equal_to('Rex'))
+    assert_that(loaded_meta[10][4], equal_to(5))
+    assert_that(loaded_meta[10][5], equal_to(2))
+    assert_that(loaded_meta[10][6], equal_to('T3'))
+    assert_that(loaded_meta[10][7], equal_to(1))
+    assert_that(loaded_meta[10][8], equal_to(0)) 
     # Test the data
-    loaded = np.loadtxt(target, delimiter=',')
+    loaded = np.loadtxt(target)
     raw_loaded = np.loadtxt(
         Path('data/test_data/raw_data/'+loaded_meta[10][0]), 
         delimiter=',')
@@ -133,8 +134,8 @@ def test_import_data_save():
 def compare_data(raw_data_path, dataset_file, meta_file, i=None):
     ''' Compare a row from the dataset against the corresponding raw data file. '''
     # Load dataset
-    loaded_dataset = np.loadtxt(dataset_file, delimiter=',')   
-    loaded_meta = np.loadtxt(meta_file, dtype=str, delimiter=',')
+    loaded_dataset = np.loadtxt(dataset_file)   
+    loaded_meta = np.genfromtxt(meta_file, delimiter=',', dtype=None, encoding=None)
     # Select a row at random.
     rows = loaded_meta.shape[0]
     if i:
@@ -143,7 +144,7 @@ def compare_data(raw_data_path, dataset_file, meta_file, i=None):
         i = np.random.randint(0,rows)
     filename = loaded_meta[i][0]
     files = raw_data_path.rglob('**/'+filename)
-    sensor_num = int(loaded_meta[i][6])
+    sensor_num = loaded_meta[i][7]
     # Find the corresponding raw data file and test dataset against it.
     count = 0
     for f in files:
@@ -160,16 +161,16 @@ def test_dataset():
     ''' Test a row of the dataset against the corresponding raw data file. '''
     i = 7
     raw_data_path = Path('data/test_data/raw_data')
-    dataset_file = Path('data/test_data/datasets/test_output_dataset.csv')
-    meta_file = Path('data/test_data/datasets/test_output_dataset_meta.csv')
+    dataset_file = Path('data/test_data/datasets/test_output_dataset.txt')
+    meta_file = Path('data/test_data/datasets/test_output_dataset_metaset.txt')
     compare_data(raw_data_path, dataset_file, meta_file, i)
 
 
 def test_dataset_random():
     ''' Test a random row of the dataset against the corresponding raw data file. '''
     raw_data_path = Path('data/test_data/raw_data')
-    dataset_file = Path('data/test_data/datasets/test_output_dataset.csv')
-    meta_file = Path('data/test_data/datasets/test_output_dataset_meta.csv')
+    dataset_file = Path('data/test_data/datasets/test_output_dataset.txt')
+    meta_file = Path('data/test_data/datasets/test_output_dataset_metaset.txt')
     compare_data(raw_data_path, dataset_file, meta_file)
 
 
@@ -183,17 +184,25 @@ def test_dataset_random_user():
     config.read(config_files)
     raw_data_path = Path(config.get('files', 'raw_data_dir'))
     dataset_file = Path(config.get('files', 'dataset'))
-    meta_file = Path(config.get('files', 'meta'))
+    meta_file = Path(config.get('files', 'metaset'))
+    compare_data(raw_data_path, dataset_file, meta_file)
+    # Check the training set
+    dataset_file = Path(config.get('files', 'dataset_train'))
+    meta_file = Path(config.get('files', 'metaset_train'))
+    compare_data(raw_data_path, dataset_file, meta_file)
+    # Check the test set
+    dataset_file = Path(config.get('files', 'dataset_test'))
+    meta_file = Path(config.get('files', 'metaset_test'))
     compare_data(raw_data_path, dataset_file, meta_file)
 
 def test_split_data():
     ''' Test randomly splitting the dataset and meta data into two sets - training and test sets '''
-    dataset_file = 'data/test_data/datasets/test_output_dataset.csv'
-    meta_file = 'data/test_data/datasets/test_output_dataset_meta.csv'
+    dataset_file = 'data/test_data/datasets/test_output_dataset.txt'
+    meta_file = 'data/test_data/datasets/test_output_dataset_metaset.txt'
     dest = 'data/test_data/datasets'
     label = 'test_output_'
     split_data.split(dataset_file, meta_file, 0.2, dest=dest, label=label)
-    expected = Path(dest+'/'+label+'dataset_train.csv')
+    expected = Path(dest+'/'+label+'dataset_train.txt')
     assert_that(expected.exists(), is_(True))
 
 
@@ -208,12 +217,12 @@ def test_split_data_reload():
     i = 2
     raw_data_path = Path(config.get('files', 'raw_data_dir'))
     dataset_file = Path(config.get('files', 'dataset_train'))
-    meta_file = Path(config.get('files', 'meta_train'))
+    meta_file = Path(config.get('files', 'metaset_train'))
     compare_data(raw_data_path, dataset_file, meta_file, i)
     compare_data(raw_data_path, dataset_file, meta_file) # Random i  
     # Test the _test set
     dataset_file = Path(config.get('files', 'dataset_test'))
-    meta_file = Path(config.get('files', 'meta_test'))
+    meta_file = Path(config.get('files', 'metaset_test'))
     compare_data(raw_data_path, dataset_file, meta_file, i)
     compare_data(raw_data_path, dataset_file, meta_file)  # Random i 
 
@@ -229,13 +238,13 @@ def test_split_data_user():
     i = 4
     raw_data_path = Path(config.get('files', 'raw_data_dir'))
     dataset_file = Path(config.get('files', 'dataset_train'))
-    meta_file = Path(config.get('files', 'meta_train'))
+    meta_file = Path(config.get('files', 'metaset_train'))
     print('Testing dataset', dataset_file, 'and', meta_file)
     compare_data(raw_data_path, dataset_file, meta_file, i)
     compare_data(raw_data_path, dataset_file, meta_file)  # Random i 
     # Test the _test set
     dataset_file = Path(config.get('files', 'dataset_test'))
-    meta_file = Path(config.get('files', 'meta_test'))
+    meta_file = Path(config.get('files', 'metaset_test'))
     print('Testing dataset', dataset_file, 'and', meta_file)
     compare_data(raw_data_path, dataset_file, meta_file, i)
     compare_data(raw_data_path, dataset_file, meta_file)  # Random i 
