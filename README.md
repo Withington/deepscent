@@ -29,27 +29,37 @@ Follow [Tensorflow's instuctions](https://www.tensorflow.org/install/gpu "Tensor
 ```
 cd deepscent
 ```
-The command below runs a Docker container with tensorflow configured to 
-run on GPUs, mounts volumes and launches Jupyter Notebook.
+
+The image base has tensorflow configured to run on GPUs.
+
+```
+docker build -t deepscent_gpu dockerfiles/deepscent_gpu
+```
+
+Run the Docker container, mount volumes and launch Jupyter Notebook.
 ```
 docker run --runtime=nvidia -it \
 --name deepscent \
 -v "$(pwd)"/notebooks:/notebooks/deepscent/notebooks \
 -v "$(pwd)"/data:/notebooks/deepscent/data:ro \
 -v "$(pwd)"/logs:/notebooks/deepscent/logs \
--p 8888:8888 tensorflow/tensorflow:latest-gpu-py3
+-p 8888:8888 deepscent_gpu
 ```
 This returns a ULR where you can open the Jupyter Notebook. Navigate 
 to notebooks/deepscent/notebooks and open mlp.ipynb.
 
 ## Alternative - run on CPU
-Alternative docker run options -
+
+```
+docker build -t deepscent_cpu dockerfiles/deepscent_cpu
+```
+
 ```
 docker run -it \
 --name deepscent \
 -v "$(pwd)"/notebooks:/notebooks/deepscent/notebooks \
 -v "$(pwd)"/data:/notebooks/deepscent/data:ro \
 -v "$(pwd)"/logs:/notebooks/deepscent/logs \
--p 8888:8888 tensorflow/tensorflow:latest-py3
+-p 8888:8888 deepscent_cpu
 ```
 
