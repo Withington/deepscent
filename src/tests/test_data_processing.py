@@ -9,6 +9,7 @@ from hamcrest import assert_that, equal_to, is_
 
 from data_processing import class_info
 from data_processing import import_data
+from data_processing import filter_data
 from data_processing import split_data
 
 
@@ -249,3 +250,23 @@ def test_split_data_user():
     compare_data(raw_data_path, dataset_file, meta_file, i)
     compare_data(raw_data_path, dataset_file, meta_file)  # Random i 
 
+
+def test_filter_data():
+    ''' Test that the flattened dog behaviour database has the expected 
+    number of rows. '''
+    input = 'data/test_data/samson/dog_behaviour_database_samson.csv'
+    target = 'data/test_data/samson/dog_behaviour_database_samson_flat.csv'
+    filter_data.flatten_dog_behaviour_database(input, target)
+    loaded_target = pd.read_csv(Path(target), parse_dates=['Date'])
+    assert_that(loaded_target.shape[0], equal_to(6*3))
+    assert_that(loaded_target.shape[1], equal_to(10))
+
+
+def test_remove_samples():
+
+    database = 'data/test_data/samson/dog_behaviour_database_samson_flat.csv'
+    dataset = 'data/test_data/samson/samson_dataset.txt'
+    meta = 'data/test_data/samson/samson_dataset_metaset.txt'
+    dest = 'data/test_data/samson'
+    prefix = 'test_output_'
+    filter_data.remove_samples(database, dataset, meta, dest, prefix)

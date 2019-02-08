@@ -66,7 +66,7 @@ def create_dataset(input, target='', max_cols=12000, verbose=False):
         file = good.at[i,'file']
         d_i = np.loadtxt(file,delimiter=',')
         assert(d_i.shape[0]==3)
-        assert(d_i.shape[1]>100)
+        assert(d_i.shape[1]>50) # Crude check that this looks like a pressure sensor file
         # Set the number of columns by truncating or padding with zeros.
         cols = d_i.shape[1]
         if cols > max_cols:

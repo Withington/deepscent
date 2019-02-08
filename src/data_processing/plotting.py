@@ -33,7 +33,7 @@ def plot_dataset(input):
     plt.show()
     plt.figure(2)
     plt.suptitle('Some example time series')
-    i = int(np.round(np.random.random_sample()*df.shape[0]/3))
+    i = int(np.round(np.random.random_sample()*(df.shape[0]-1)/3))
     i = i * 3
     df.iloc[i][1:].plot(label='Sample '+str(i)+' class: '+str(df.iloc[i][0]))
     i = i+1
