@@ -1,14 +1,14 @@
 ﻿Date,Dog name,Run,Pass,Target position,Concen-tration,Pos 1. sample,Pos 2. sample,Pos 3. sample,Pos. 1 behaviour,Pos. 2 behaviour,Pos. 3 behaviour,Dog was correct?,Comments,Pos 1. concentration,Pos 2. concentration,Pos 3. concentration,IsInfoRow,Corresponding Info Row,Concentration1,Concentration2,Concentration3,IsLastPass,TrueClass1,TrueClass2,TrueClass3,DogClassResult1,DogClassResult2,DogClassResult3,Result1,Result2,Result3,End
 01-May-17,Samson,1,,,,,,,MO,1/1M,MO,,,0,0.000001,0,TRUE,2,0,0.000001,0,FALSE,,,,,,,,,,1
-01-May-17,Samson,1,1,,,,,,NI,IND,NI,,,,,,FALSE,2,0,0.000001,0,TRUE,0,1,0,0,1,0,TN,TP,TN,1
+01-May-17,Samson,1,1,,,,,,NI,IND,NS,,,,,,FALSE,2,0,0.000001,0,TRUE,0,1,0,0,1,2,TN,TP,,1
 01-May-17,Samson,2,,,,,,,MO,1/1M,MO,,,0,0.000001,0,TRUE,4,0,0.000001,0,FALSE,,,,,,,,,,1
 01-May-17,Samson,2,1,,,,,,NI,IND,NI,,,,,,FALSE,4,0,0.000001,0,TRUE,0,1,0,0,1,0,TN,TP,TN,1
 01-May-17,Samson,3,,,,,,,MO,1/1M,MO,,,0,0.000001,0,TRUE,6,0,0.000001,0,FALSE,,,,,,,,,,1
 01-May-17,Samson,3,1,,,,,,NI,NI,NI,,,,,,FALSE,6,0,0.000001,0,FALSE,0,1,0,0,0,0,TN,FN,TN,1
 01-May-17,Samson,3,2,,,,,,IND,NI,NI,,,,,,FALSE,6,0,0.000001,0,TRUE,0,1,0,1,0,0,FP,FN,TN,1
-01-May-17,Samson,1,,,,,,,1/1M,MO,MO,,,0.000001,0,0,TRUE,9,0.000001,0,0,FALSE,,,,,,,,,,1
-01-May-17,Samson,1,1,,,,,,IND,NS,NS,,,,,,FALSE,9,0.000001,0,0,FALSE,1,0,0,1,2,2,TP,,,1
-01-May-17,Samson,1,2,,,,,,IND,NI,NI,,,,,,FALSE,9,0.000001,0,0,TRUE,1,0,0,1,0,0,TP,TN,TN,1
+01-May-17,Samson,4,,,,,,,1/1M,MO,MO,,,0.000001,0,0,TRUE,9,0.000001,0,0,FALSE,,,,,,,,,,1
+01-May-17,Samson,4,1,,,,,,IND,NS,NS,,,,,,FALSE,9,0.000001,0,0,FALSE,1,0,0,1,2,2,TP,,,1
+01-May-17,Samson,4,2,,,,,,IND,NI,NI,,,,,,FALSE,9,0.000001,0,0,TRUE,1,0,0,1,0,0,TP,TN,TN,1
 01-May-17,Barney,2,,,,,,,MO,1/1M,MO,,,0,0.000001,0,TRUE,12,0,0.000001,0,FALSE,,,,,,,,,,1
 01-May-17,Barney,2,1,,,,,,NI,IND,NI,,,,,,FALSE,12,0,0.000001,0,TRUE,0,1,0,0,1,0,TN,TP,TN,1
 01-May-17,Barney,3,,,,,,,MO,1/1M,MO,,,0,0.000001,0,TRUE,14,0,0.000001,0,FALSE,,,,,,,,,,1

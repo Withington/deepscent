@@ -1,4 +1,4 @@
-# filename,date,time,dog,run,pass,positive_position,sensor_number,class
+filename,date,time,dog,run,pass,positive_position,sensor_number,class
 2017_11_06-11_52-Rex_1_1_T1_.csv,2017-11-06,11:52:00,Rex,1,1,T1,0,1
 2017_11_06-11_52-Rex_1_1_T1_.csv,2017-11-06,11:52:00,Rex,1,1,T1,1,0
 2017_11_06-11_52-Rex_1_1_T1_.csv,2017-11-06,11:52:00,Rex,1,1,T1,2,0

@@ -106,7 +106,7 @@ def create_dataset(input, target='', max_cols=12000, verbose=False):
             '/' + output_file.stem + '_metaset.txt')
         print('Saving data to', output_file, 'and', output_file_meta)
         np.savetxt(output_file, data, fmt='%f', delimiter=' ')
-        np.savetxt(output_file_meta, meta, header=meta_header, fmt='%s', delimiter=',')
+        np.savetxt(output_file_meta, meta, header=meta_header, comments='', fmt='%s', delimiter=',')
 
     print('Number of time series data points used:', max_cols)
     print('Dataset shape:', data.shape) 

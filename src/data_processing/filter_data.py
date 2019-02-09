@@ -42,13 +42,13 @@ def flatten_dog_behaviour_database(input, target):
     df_pos3.rename(index=str, columns={'Concentration3': 'Concentration', 'TrueClass3': 'y_true', 'DogClassResult3': 'y_pred', 'Result3': 'Result'}, inplace=True)
     df_pos3['SensorNumber'] = 2
     # Concatenate the three positions and reset the row index labels
-    df_samples = pd.concat([df_pos1, df_pos2, df_pos3])
-    df_samples.index = range(len(df_samples.index))
+    database_df = pd.concat([df_pos1, df_pos2, df_pos3])
+    database_df.index = range(len(database_df.index))
 
     # Save
     if target:
         print('Saving flattened version of\n', input, '\nto\n', target)
-        df_samples.to_csv(Path(target), index=False)
+        database_df.to_csv(Path(target), index=False)
 
 
 def remove_samples(database, dataset, metaset, dest, prefix):
@@ -71,38 +71,43 @@ def remove_samples(database, dataset, metaset, dest, prefix):
         Prefix for naming the output dataset and metaset
     '''
 
-    df_samples = pd.read_csv(Path(database), parse_dates=['Date'])
+    database_df = pd.read_csv(Path(database), parse_dates=['Date'])
+    assert(database_df.shape[1]==10)
     # Find any rows where y_pred is class 2, this is where the dog did not search the sample (e.g. dog behaviour was "NS")
-    df_not_searched = df_samples[df_samples['y_pred']==2]
+    database_ns_df = database_df[database_df['y_pred']==2]
 
     # Load pressure sensor data
-    loaded_dataset = pd.read_csv(dataset, sep=' ')
-    loaded_meta = pd.read_csv(metaset, sep=',', parse_dates=['date'])
-    n = loaded_meta.shape[0]
-    assert(n == loaded_dataset.shape[0]+1)
+    dataset_df = pd.read_csv(dataset, sep=' ', header=None)
+    meta_df = pd.read_csv(metaset, sep=',', parse_dates=['date'])
+    print(dataset_df.head())
+    print(meta_df.head())
+    print(dataset_df.shape)
+    print(meta_df.shape)
+    assert(meta_df.shape[1]==9)
+    assert(meta_df.shape[0] == dataset_df.shape[0])
 
-    assert(loaded_meta.shape[0]==df_samples.shape[0])
-    for s in df_not_searched.itertuples():
-        date = loaded_meta['date'] == s.Date
-        dog = loaded_meta['dog'] == s.DogName
-        run = loaded_meta['run'] == s.Run
-        ps = loaded_meta['pass'] == s.Pass
-        sensor = loaded_meta['sensor_number'] == s.SensorNumber
+    assert(meta_df.shape[0]==database_df.shape[0])
+    for s in database_ns_df.itertuples():
+        date = meta_df['date'] == s.Date
+        dog = meta_df['dog'] == s.DogName
+        run = meta_df['run'] == s.Run
+        ps = meta_df['pass'] == s.Pass
+        sensor = meta_df['sensor_number'] == s.SensorNumber
         condition = date & dog & run & ps & sensor
-        if loaded_meta[condition].empty:
+        if meta_df[condition].empty:
             print('Did not find raw data:\n',s.Date, ',', s.DogName, ', Run:', s.Run, ', Pass:', s.Pass, ',Sensor:', s.SensorNumber, '\n')
         else:
             print('Found:\n', s.Date, ',', s.DogName, ',', s.Run, ',', s.Pass, ',', s.SensorNumber) 
-            print('Found data is:\n', loaded_meta[condition].head(), '\n')
-            print(loaded_meta[condition].shape[0])
-            assert(loaded_meta[condition].shape[0]==1)
-            i = loaded_meta.index.get_loc(loaded_meta[condition].iloc[-1].name)
+            print('Found data is:\n', meta_df[condition].head(), '\n')
+            print(meta_df[condition].shape[0])
+            assert(meta_df[condition].shape[0]==1)
+            i = meta_df.index.get_loc(meta_df[condition].iloc[-1].name)
             print('Row:',i)
-            loaded_meta.drop(loaded_meta.index[i], inplace=True)
-            loaded_dataset.drop(loaded_dataset.index[i], inplace=True)
+            meta_df.drop(meta_df.index[i], inplace=True)
+            dataset_df.drop(dataset_df.index[i], inplace=True)
  
 
-    assert(loaded_meta.shape[0]==loaded_dataset.shape[0]+1)
+    assert(meta_df.shape[0]==dataset_df.shape[0])
 
 
     # Save
@@ -110,9 +115,8 @@ def remove_samples(database, dataset, metaset, dest, prefix):
         dest_dataset = dest + '/' + prefix + 'dataset.txt'
         dest_metaset = dest + '/' + prefix + 'metaset.txt'
         print('Saving new dataset and metaset to\n', dest_dataset, '\nand\n', dest_metaset)
-        np.savetxt(Path(dest_dataset), loaded_dataset, fmt='%f', delimiter=' ')
-        np.savetxt(Path(dest_metaset), loaded_meta, fmt='%s', delimiter=',')
-
+        dataset_df.to_csv(Path(dest_dataset), sep=' ', header=False, index=False)
+        meta_df.to_csv(Path(dest_metaset), index=False)
 
 
 

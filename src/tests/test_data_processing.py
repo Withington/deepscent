@@ -112,21 +112,21 @@ def test_import_data_save():
     dataset_shape = import_data.create_dataset(input, target, cols)
     assert_that(dataset_shape, equal_to((expected_good*3,cols+1)))
     # Test meta data
-    loaded_meta = np.genfromtxt(target_meta, delimiter=',', dtype=None, encoding=None)
-    assert_that(loaded_meta[10][0], equal_to('2017_11_06-11_38-Rex_5_2_T3.csv'))
+    loaded_meta = pd.read_csv(target_meta, sep=',', parse_dates=['date'])
+    assert_that(loaded_meta.iloc[10]['filename'], equal_to('2017_11_06-11_38-Rex_5_2_T3.csv'))
     expected_time = datetime.datetime(2017, 11, 6, 11, 38)
-    assert_that(loaded_meta[10][1], equal_to(str(expected_time.date())))
-    assert_that(loaded_meta[10][2], equal_to(str(expected_time.time())))
-    assert_that(loaded_meta[10][3], equal_to('Rex'))
-    assert_that(loaded_meta[10][4], equal_to(5))
-    assert_that(loaded_meta[10][5], equal_to(2))
-    assert_that(loaded_meta[10][6], equal_to('T3'))
-    assert_that(loaded_meta[10][7], equal_to(1))
-    assert_that(loaded_meta[10][8], equal_to(0)) 
+    assert_that(loaded_meta.iloc[10]['date'].date(), equal_to(expected_time.date()))
+    assert_that(loaded_meta.iloc[10]['time'], equal_to(str(expected_time.time())))
+    assert_that(loaded_meta.iloc[10]['dog'], equal_to('Rex'))
+    assert_that(loaded_meta.iloc[10]['run'], equal_to(5))
+    assert_that(loaded_meta.iloc[10]['pass'], equal_to(2))
+    assert_that(loaded_meta.iloc[10]['positive_position'], equal_to('T3'))
+    assert_that(loaded_meta.iloc[10]['sensor_number'], equal_to(1))
+    assert_that(loaded_meta.iloc[10]['class'], equal_to(0)) 
     # Test the data
     loaded = np.loadtxt(target)
     raw_loaded = np.loadtxt(
-        Path('data/test_data/raw_data/'+loaded_meta[10][0]), 
+        Path('data/test_data/raw_data/'+loaded_meta.iloc[10]['filename']), 
         delimiter=',')
     cols = raw_loaded.shape[1]
     assert_that(loaded[10][1:cols+1].all(), equal_to(raw_loaded[1][:cols].all())) 
@@ -136,16 +136,16 @@ def compare_data(raw_data_path, dataset_file, meta_file, i=None):
     ''' Compare a row from the dataset against the corresponding raw data file. '''
     # Load dataset
     loaded_dataset = np.loadtxt(dataset_file)   
-    loaded_meta = np.genfromtxt(meta_file, delimiter=',', dtype=None, encoding=None)
+    loaded_meta = pd.read_csv(meta_file, sep=',', parse_dates=['date'])
     # Select a row at random.
     rows = loaded_meta.shape[0]
     if i:
         assert(i<rows)
     else:
         i = np.random.randint(0,rows)
-    filename = loaded_meta[i][0]
+    filename = loaded_meta.iloc[i]['filename']
     files = raw_data_path.rglob('**/'+filename)
-    sensor_num = loaded_meta[i][7]
+    sensor_num = loaded_meta.iloc[i]['sensor_number']
     # Find the corresponding raw data file and test dataset against it.
     count = 0
     for f in files:
@@ -261,12 +261,31 @@ def test_filter_data():
     assert_that(loaded_target.shape[0], equal_to(6*3))
     assert_that(loaded_target.shape[1], equal_to(10))
 
+def create_samson_dataset():
+    ''' Create a dataset for samson the dog from the raw pressure sensor data csv files. '''
+    source = 'data/test_data/samson/raw_data'
+    dest = 'data/test_data/samson'
+    max_cols = 100
+    class_info.parse_filenames(source, dest)
+    import_data.create_dataset(dest+'/good.pkl', dest+'/samson_dataset.txt', max_cols=max_cols, verbose=True)
+
 
 def test_remove_samples():
-
+    ''' From a dataset, use the dog behaviour database to identify any samples that the dog didn't 
+    search (marked NS) and remove them from the dataset. Save the result as a new dataset, with
+    corresponding meta data file.
+    For one sample in the filtered dataset, test that it matches the raw data file that 
+    it originated from. '''
+    create_samson_dataset()
     database = 'data/test_data/samson/dog_behaviour_database_samson_flat.csv'
     dataset = 'data/test_data/samson/samson_dataset.txt'
     meta = 'data/test_data/samson/samson_dataset_metaset.txt'
     dest = 'data/test_data/samson'
-    prefix = 'test_output_'
+    prefix = 'test_filtered_output_'
     filter_data.remove_samples(database, dataset, meta, dest, prefix)
+    # Load dataset and test against raw data files    
+    raw_data_path = Path('data/test_data/samson/raw_data')
+    dataset_file = Path('data/test_data/samson/'+prefix+'dataset.txt')
+    meta_file = Path('data/test_data/samson/'+prefix+'metaset.txt')
+    print('Testing dataset', dataset_file, 'and', meta_file)
+    compare_data(raw_data_path, dataset_file, meta_file) 

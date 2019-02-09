@@ -15,13 +15,13 @@ def split(dataset_file, meta_file, test_split, dest='', label='', shuffle=True):
     dataset_file = Path(dataset_file)
     meta_file = Path(meta_file)
     loaded_dataset = np.loadtxt(dataset_file)
-    loaded_meta = np.genfromtxt(meta_file, delimiter=',', dtype=None, encoding=None)
+    loaded_meta = pd.read_csv(meta_file, sep=',', parse_dates=['date'])
     n = loaded_meta.shape[0]
     assert(n == loaded_dataset.shape[0])
     # Split dataset
     np.random.seed(99)
     dataset_train, dataset_test, meta_train, meta_test = \
-        train_test_split(loaded_dataset, loaded_meta, test_size=test_split, shuffle=shuffle, random_state=seed)
+        train_test_split(loaded_dataset, loaded_meta.to_numpy(), test_size=test_split, shuffle=shuffle, random_state=seed)
     # Save to file
     if dest:
         dataset_train_name = label + 'dataset_train.txt'
@@ -39,10 +39,10 @@ def split(dataset_file, meta_file, test_split, dest='', label='', shuffle=True):
         np.savetxt(Path(dest+'/'+dataset_test_name), dataset_test, fmt='%f', delimiter=' ')       
         print(Path(dest+'/'+meta_train_name).name)
         np.savetxt(Path(dest+'/'+meta_train_name), meta_train, \
-            header=meta_header, fmt='%s', delimiter=',')
+            header=meta_header, comments='', fmt='%s', delimiter=',')
         print(Path(dest+'/'+meta_test_name).name)
         np.savetxt(Path(dest+'/'+meta_test_name), meta_test, \
-            header=meta_header, fmt='%s', delimiter=',')
+            header=meta_header, comments='', fmt='%s', delimiter=',')
 
 
 
