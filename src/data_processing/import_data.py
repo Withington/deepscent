@@ -8,6 +8,8 @@ import datetime
 import numpy as np
 import pandas as pd
 
+from data_processing import helper
+
 def data_size(input):
     ''' Input a pkl file listing all of the good raw data files. 
     For each file, count the number of pressure sensor data points. 
@@ -61,12 +63,9 @@ def create_dataset(input, target='', max_cols=12000, verbose=False):
 
     data = np.empty((n*3,max_cols+class_cols))
     meta = list()
-    meta_header = 'filename,date,time,dog,run,pass,positive_position,sensor_number,class'
     for i in range(n):
         file = good.at[i,'file']
-        d_i = np.loadtxt(file,delimiter=',')
-        assert(d_i.shape[0]==3)
-        assert(d_i.shape[1]>50) # Crude check that this looks like a pressure sensor file
+        d_i = helper.load_raw_data_as_np(file)
         # Set the number of columns by truncating or padding with zeros.
         cols = d_i.shape[1]
         if cols > max_cols:
@@ -104,9 +103,8 @@ def create_dataset(input, target='', max_cols=12000, verbose=False):
         output_file = Path(target)
         output_file_meta = Path(str(output_file.parent) + \
             '/' + output_file.stem + '_metaset.txt')
-        print('Saving data to', output_file, 'and', output_file_meta)
-        np.savetxt(output_file, data, fmt='%f', delimiter=' ')
-        np.savetxt(output_file_meta, meta, header=meta_header, comments='', fmt='%s', delimiter=',')
+        helper.save_dataset_from_np(output_file, data, verbose=True)
+        helper.save_meta_from_np(output_file_meta, np.array(meta), verbose=True)
 
     print('Number of time series data points used:', max_cols)
     print('Dataset shape:', data.shape) 

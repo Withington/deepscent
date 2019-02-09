@@ -12,7 +12,11 @@ import pandas as pd
 def load_raw_data_as_np(file):
     ''' Load raw pressure sensor data from csv file and
     return numpy array '''
-    return np.loadtxt(Path(file),  delimiter=',')
+    array = np.loadtxt(Path(file),  delimiter=',')
+    assert(array.shape[0]==3), ['Expected 3 rows, got', array.shape[0]]
+    assert(array.shape[1]>50), ['Expected at least 50 columns, got', array.shape[1]] # Crude check that this looks like a pressure sensor file
+        
+    return array
 
 # Dog behaviour database ------------------------------------------------------------------------------------------
 
@@ -54,6 +58,11 @@ def save_dog_behaviour_flat_db(df, target):
 
 
 # Dataset ------------------------------------------------------------------------------------------
+
+def load_dataset(file):
+    ''' Load dataset from txt file and return pandas dataframe '''
+    df = pd.read_csv(Path(file), sep=' ', header=None)
+    return df
 
 def load_dataset_as_np(file):
     ''' Load dataset txt file and return numpy array '''
@@ -107,6 +116,7 @@ def save_meta(target, df, verbose=False):
     ''' Save meta data dataframe to txt file '''
     file = Path(target)
     assert(file.suffix=='.txt'), ['Meta file type must be .txt, not', file.suffix]
+    assert(list(df)==meta_header())
     if verbose:
         print('Saving meta data to:', file)
     df.to_csv(file, index=False)
@@ -116,6 +126,8 @@ def save_meta_from_np(target, array, verbose=False):
     ''' Save meta data numpy array to txt file '''
     file = Path(target)   
     assert(file.suffix=='.txt'), ['Meta file type must be .txt, not', file.suffix]
+    print(array.shape)
+    assert(array.shape[1]==len(meta_header())), ['Array has',array.shape[1], 'columns but expected', len(meta_header()), 'columns']
     if verbose:
         print('Saving meta data from np array to:', file)
     np.savetxt(file, array, header=meta_header_as_str(), comments='', fmt='%s', delimiter=',')

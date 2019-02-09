@@ -20,7 +20,7 @@ def split(dataset_file, meta_file, test_split, dest='', label='', shuffle=True):
     # Split dataset
     np.random.seed(99)
     dataset_train, dataset_test, meta_train, meta_test = \
-        train_test_split(loaded_dataset, loaded_meta.to_numpy(), test_size=test_split, shuffle=shuffle, random_state=seed)
+        train_test_split(loaded_dataset, loaded_meta, test_size=test_split, shuffle=shuffle, random_state=seed)
     # Save to file
     if dest:
         dataset_train_name = label + 'dataset_train.txt'

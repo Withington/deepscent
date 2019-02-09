@@ -8,6 +8,8 @@ import datetime
 import numpy as np
 import pandas as pd
 
+from data_processing import helper
+
 def flatten_dog_behaviour_database(input, target):
     ''' Flatten an input dog behaviour database csv file by creating one 
     row per sample. The input has information about three samples 
@@ -16,7 +18,7 @@ def flatten_dog_behaviour_database(input, target):
     Write the output to file, at the specified destination. '''
 
     # Read in the data and remove unneeded rows and columns
-    data_input = pd.read_csv(Path(input), parse_dates=['Date'])
+    data_input = helper.load_dog_behaviour_database(input)
     data = data_input[data_input['IsInfoRow']==False]
     # Drop unneeded columns
     cols = [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,32]
@@ -77,8 +79,8 @@ def remove_samples(database, dataset, metaset, dest, prefix):
     database_ns_df = database_df[database_df['y_pred']==2]
 
     # Load pressure sensor data
-    dataset_df = pd.read_csv(dataset, sep=' ', header=None)
-    meta_df = pd.read_csv(metaset, sep=',', parse_dates=['date'])
+    dataset_df = helper.load_dataset(dataset)
+    meta_df = helper.load_meta(metaset)
     print(dataset_df.head())
     print(meta_df.head())
     print(dataset_df.shape)
