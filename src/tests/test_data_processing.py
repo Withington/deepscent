@@ -274,7 +274,7 @@ def test_remove_samples():
     ''' From a dataset, use the dog behaviour database to identify any samples that the dog didn't 
     search (marked NS) and remove them from the dataset. Save the result as a new dataset, with
     corresponding meta data file.
-    For one sample in the filtered dataset, test that it matches the raw data file that 
+    For each sample in the filtered dataset, test that it matches the raw data file that 
     it originated from. '''
     create_samson_dataset()
     database = 'data/test_data/samson/dog_behaviour_database_samson_flat.csv'
@@ -290,4 +290,24 @@ def test_remove_samples():
     print('Testing dataset', dataset_file, 'and', meta_file)
     compare_data(raw_data_path, dataset_file, meta_file) 
     for i in range(0,15):
+        compare_data(raw_data_path, dataset_file, meta_file, i=i) 
+
+
+
+def test_remove_samples_duplicate_db_rows():
+    ''' Test removing NS samples where the dog behaviour database contains 
+    more than one row with the same date, dog, run, pass and sensor number '''
+    database = 'data/test_data/samson/duplicate_test_dog_behaviour_database_flat.csv'
+    dataset = 'data/test_data/samson/duplicate_test_dataset.txt'
+    meta = 'data/test_data/samson/duplicate_test_dataset_meta.txt'
+    dest = 'data/test_data/samson'
+    label = 'duplicate_test_filtered_dataset'
+    filter_data.remove_samples(database, dataset, meta, dest, label)
+    # Load dataset and test against raw data files    
+    raw_data_path = Path('data/test_data/samson/raw_data')
+    dataset_file = 'data/test_data/samson/'+label+'.txt'
+    meta_file = 'data/test_data/samson/'+label+'_meta.txt'
+    print('Testing dataset', dataset_file, 'and', meta_file)
+    compare_data(raw_data_path, dataset_file, meta_file) 
+    for i in range(0,16):
         compare_data(raw_data_path, dataset_file, meta_file, i=i) 

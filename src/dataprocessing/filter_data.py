@@ -86,7 +86,6 @@ def remove_samples(database, dataset, meta, dest, label):
     assert(meta_df.shape[1]==9)
     assert(meta_df.shape[0] == dataset_df.shape[0])
 
-    assert(meta_df.shape[0]==db_flat.shape[0])
     for s in db_ns.itertuples():
         date = meta_df['date'] == s.Date
         dog = meta_df['dog'] == s.DogName
@@ -99,13 +98,47 @@ def remove_samples(database, dataset, meta, dest, label):
         else:
             print('Found data row for:\n', s.Date, ',', s.DogName, ',', s.Run, ',', s.Pass, ',', s.SensorNumber) 
             print('Found data is:\n', meta_df[condition].head(), '\n')
-            print(meta_df[condition].shape[0])
-            assert(meta_df[condition].shape[0]==1)
-            i = meta_df.index.get_loc(meta_df[condition].iloc[-1].name)
-            print('Row:',i)
-            meta_df.drop(meta_df.index[i], inplace=True)
-            dataset_df.drop(dataset_df.index[i], inplace=True)
- 
+            assert(meta_df[condition].shape[0] <= 2)
+            if meta_df[condition].shape[0] == 1 :
+                drop_a_row(meta_df, dataset_df, condition)
+            else:
+                # We found 2 rows in meta, try to find 2 rows in the db too
+                meta_rows = meta_df[condition]
+                this_date = db_flat['Date'] == s.Date
+                this_dog= db_flat['DogName'] == s.DogName
+                this_run= db_flat['Run'] == s.Run
+                this_pass= db_flat['Pass'] == s.Pass
+                this_sensor = db_flat['SensorNumber'] == s.SensorNumber
+                this_condition = this_date & this_dog & this_run & this_pass & this_sensor
+                db_rows = db_flat[this_condition]
+                assert(db_rows.shape[0] == 2)
+                print('Found 2 rows in the dog behaviour database too:')
+                for r in db_rows.itertuples():
+                    print(r)
+                meta_time_0 = meta_rows.iloc[0]['time']
+                meta_time_1 = meta_rows.iloc[1]['time']
+                time_condition_0 = meta_df['time'] == meta_time_0
+                time_condition_1 = meta_df['time'] == meta_time_1
+                if (db_rows.iloc[0].y_pred == 2) & (db_rows.iloc[1].y_pred == 2):
+                    print('Drop both rows')
+                    condition_a = condition & time_condition_0
+                    condition_b = condition & time_condition_1
+                    drop_a_row(meta_df, dataset_df, condition_a)
+                    drop_a_row(meta_df, dataset_df, condition_b)
+                elif db_rows.iloc[0].y_pred == 2 :
+                    if meta_time_0 < meta_time_1 :
+                        condition_a = condition & time_condition_0
+                    else:
+                        condition_a = condition & time_condition_1
+                    drop_a_row(meta_df, dataset_df, condition_a)
+                else:
+                    assert(db_rows.iloc[1].y_pred == 2)
+                    if meta_time_0 < meta_time_1 :
+                        condition_b = condition & time_condition_1
+                    else:
+                        condition_b = condition & time_condition_0
+                    drop_a_row(meta_df, dataset_df, condition_b)
+
     assert(meta_df.shape[0]==dataset_df.shape[0])
     if dest:
         dest_dataset = dest + '/' + label + '.txt'
@@ -115,6 +148,13 @@ def remove_samples(database, dataset, meta, dest, label):
     print('Dataset shape changed from', dataset_shape_orig, 'to', dataset_df.shape)
     print('Meta data shape changed from', meta_shape_orig, 'to', meta_df.shape)
 
+
+def drop_a_row(meta_df, dataset_df, condition):
+    assert(meta_df[condition].shape[0] == 1)
+    i = meta_df.index.get_loc(meta_df[condition].iloc[-1].name)
+    print('Dropping row:\n', meta_df[condition])
+    meta_df.drop(meta_df.index[i], inplace=True)
+    dataset_df.drop(dataset_df.index[i], inplace=True)
 
 
 def main():
