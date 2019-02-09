@@ -74,20 +74,20 @@ def remove_samples(database, dataset, meta, dest, label):
 
     db_flat = manager.load_dog_behaviour_flat_db(database)
     # Find any rows where y_pred is class 2, this is where the dog did not search the sample (e.g. dog behaviour was "NS")
-    database_ns_df = db_flat[db_flat['y_pred']==2]
+    db_ns = db_flat[db_flat['y_pred']==2]
 
     # Load pressure sensor data
     dataset_df = manager.load_dataset(dataset)
     meta_df = manager.load_meta(meta)
+    dataset_shape_orig = dataset_df.shape
+    meta_shape_orig = meta_df.shape
     print(dataset_df.head())
     print(meta_df.head())
-    print(dataset_df.shape)
-    print(meta_df.shape)
     assert(meta_df.shape[1]==9)
     assert(meta_df.shape[0] == dataset_df.shape[0])
 
     assert(meta_df.shape[0]==db_flat.shape[0])
-    for s in database_ns_df.itertuples():
+    for s in db_ns.itertuples():
         date = meta_df['date'] == s.Date
         dog = meta_df['dog'] == s.DogName
         run = meta_df['run'] == s.Run
@@ -112,6 +112,9 @@ def remove_samples(database, dataset, meta, dest, label):
         dest_meta = dest + '/' + label + '_meta.txt'
         manager.save_dataset(dest_dataset, dataset_df, verbose=True)
         manager.save_meta(dest_meta, meta_df, verbose=True)
+    print('Dataset shape changed from', dataset_shape_orig, 'to', dataset_df.shape)
+    print('Meta data shape changed from', meta_shape_orig, 'to', meta_df.shape)
+
 
 
 def main():
