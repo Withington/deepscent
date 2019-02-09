@@ -9,13 +9,21 @@ import pandas as pd
 
 # Raw pressure sensor data (three samples per file) ------------------------------------------------------------------------------------------
 
+def load_raw_data(file):
+    ''' Load raw pressure sensor data from csv file and
+    return pandas dataframe '''  
+    df = pd.read_csv(Path(file), header=None)
+    assert(df.shape[0] == 3), ['Expected 3 rows, got', df.shape[0]]
+    assert(df.shape[1]>50), ['Expected at least 50 columns, got', df.shape[1]] # Crude check that this looks like a pressure sensor file      
+    return df
+
+
 def load_raw_data_as_np(file):
     ''' Load raw pressure sensor data from csv file and
     return numpy array '''
     array = np.loadtxt(Path(file),  delimiter=',')
     assert(array.shape[0]==3), ['Expected 3 rows, got', array.shape[0]]
-    assert(array.shape[1]>50), ['Expected at least 50 columns, got', array.shape[1]] # Crude check that this looks like a pressure sensor file
-        
+    assert(array.shape[1]>50), ['Expected at least 50 columns, got', array.shape[1]] # Crude check that this looks like a pressure sensor file      
     return array
 
 # Dog behaviour database ------------------------------------------------------------------------------------------
@@ -52,9 +60,13 @@ def load_dog_behaviour_flat_db(file):
     return df
 
 
-def save_dog_behaviour_flat_db(df, target):
+def save_dog_behaviour_flat_db(target, df, verbose=False):
+    file = Path(target)
     assert(list(df)==dog_behaviour_flat_db_header()) , ['Unexpected header in flattened dog behaviour database']
-    df.to_csv(Path(target), index=False)
+    assert(file.suffix=='.csv'), ['Dog behaviour database file type must be .csv, not', file.suffix]
+    if verbose:
+        print('Saving flat dog behaviour database to:', file)
+    df.to_csv(file, index=False)
 
 
 # Dataset ------------------------------------------------------------------------------------------

@@ -23,14 +23,14 @@ def data_size(input):
     size_info = []
     for i in range(0,n):
         file = good.at[i,'file']
-        df = pd.read_csv(file, header=None)
-        s = df.shape[1]
-        size_info.append((file, df.shape[0], df.shape[1]))
-        if s > max:
-            max = s
+        raw_data = helper.load_raw_data_as_np(file)
+        num_data_points = raw_data.shape[1]
+        size_info.append((file, raw_data.shape[0], num_data_points))
+        if num_data_points > max:
+            max = num_data_points
             max_file = file
-        if s >= 30000:
-            print(s, 'data points in file', file)
+        if num_data_points >= 30000:
+            print(num_data_points, 'data points in file', file)
 
     print('max size is', max)
     print('in file', max_file)

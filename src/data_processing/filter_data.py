@@ -49,8 +49,7 @@ def flatten_dog_behaviour_database(input, target):
 
     # Save
     if target:
-        print('Saving flattened version of\n', input, '\nto\n', target)
-        database_df.to_csv(Path(target), index=False)
+        helper.save_dog_behaviour_flat_db(target, database_df, verbose=True)
 
 
 def remove_samples(database, dataset, metaset, dest, prefix):
@@ -73,8 +72,7 @@ def remove_samples(database, dataset, metaset, dest, prefix):
         Prefix for naming the output dataset and metaset
     '''
 
-    database_df = pd.read_csv(Path(database), parse_dates=['Date'])
-    assert(database_df.shape[1]==10)
+    database_df = helper.load_dog_behaviour_flat_db(database)
     # Find any rows where y_pred is class 2, this is where the dog did not search the sample (e.g. dog behaviour was "NS")
     database_ns_df = database_df[database_df['y_pred']==2]
 
@@ -108,18 +106,12 @@ def remove_samples(database, dataset, metaset, dest, prefix):
             meta_df.drop(meta_df.index[i], inplace=True)
             dataset_df.drop(dataset_df.index[i], inplace=True)
  
-
     assert(meta_df.shape[0]==dataset_df.shape[0])
-
-
-    # Save
     if dest:
         dest_dataset = dest + '/' + prefix + 'dataset.txt'
         dest_metaset = dest + '/' + prefix + 'metaset.txt'
-        print('Saving new dataset and metaset to\n', dest_dataset, '\nand\n', dest_metaset)
-        dataset_df.to_csv(Path(dest_dataset), sep=' ', header=False, index=False)
-        meta_df.to_csv(Path(dest_metaset), index=False)
-
+        helper.save_dataset(dest_dataset, dataset_df, verbose=True)
+        helper.save_meta(dest_metaset, meta_df, verbose=True)
 
 
 def main():
