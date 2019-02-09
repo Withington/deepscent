@@ -12,15 +12,14 @@ from dataprocessing import manager
 
 def split(dataset_file, meta_file, test_split, dest='', label='', shuffle=True):
     seed = 99
-    # Load dataset
-    loaded_dataset = manager.load_dataset_as_np(dataset_file)
-    loaded_meta = manager.load_meta_as_np(meta_file)
-    n = loaded_meta.shape[0]
-    assert(n == loaded_dataset.shape[0])
-    # Split dataset
     np.random.seed(99)
+    # Load dataset
+    dataset_full = manager.load_dataset_as_np(dataset_file)
+    meta_full = manager.load_meta_as_np(meta_file)
+    assert(meta_full.shape[0] == dataset_full.shape[0])
+    # Split dataset
     dataset_train, dataset_test, meta_train, meta_test = \
-        train_test_split(loaded_dataset, loaded_meta, test_size=test_split, shuffle=shuffle, random_state=seed)
+        train_test_split(dataset_full, meta_full, test_size=test_split, shuffle=shuffle, random_state=seed)
     # Save to file
     if dest:
         dataset_train_name = label + 'dataset_train.txt'

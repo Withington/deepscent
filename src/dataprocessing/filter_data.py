@@ -18,8 +18,8 @@ def flatten_dog_behaviour_database(input, target):
     Write the output to file, at the specified destination. '''
 
     # Read in the data and remove unneeded rows and columns
-    data_input = manager.load_dog_behaviour_database(input)
-    data = data_input[data_input['IsInfoRow']==False]
+    db = manager.load_dog_behaviour_database(input)
+    data = db[db['IsInfoRow']==False]
     # Drop unneeded columns
     cols = [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,32]
     data = data.drop(data.columns[cols],axis=1)
@@ -44,12 +44,12 @@ def flatten_dog_behaviour_database(input, target):
     df_pos3.rename(index=str, columns={'Concentration3': 'Concentration', 'TrueClass3': 'y_true', 'DogClassResult3': 'y_pred', 'Result3': 'Result'}, inplace=True)
     df_pos3['SensorNumber'] = 2
     # Concatenate the three positions and reset the row index labels
-    database_df = pd.concat([df_pos1, df_pos2, df_pos3])
-    database_df.index = range(len(database_df.index))
+    db_flat = pd.concat([df_pos1, df_pos2, df_pos3])
+    db_flat.index = range(len(db_flat.index))
 
     # Save
     if target:
-        manager.save_dog_behaviour_flat_db(target, database_df, verbose=True)
+        manager.save_dog_behaviour_flat_db(target, db_flat, verbose=True)
 
 
 def remove_samples(database, dataset, metaset, dest, prefix):
@@ -72,9 +72,9 @@ def remove_samples(database, dataset, metaset, dest, prefix):
         Prefix for naming the output dataset and metaset
     '''
 
-    database_df = manager.load_dog_behaviour_flat_db(database)
+    db_flat = manager.load_dog_behaviour_flat_db(database)
     # Find any rows where y_pred is class 2, this is where the dog did not search the sample (e.g. dog behaviour was "NS")
-    database_ns_df = database_df[database_df['y_pred']==2]
+    database_ns_df = db_flat[db_flat['y_pred']==2]
 
     # Load pressure sensor data
     dataset_df = manager.load_dataset(dataset)
@@ -86,7 +86,7 @@ def remove_samples(database, dataset, metaset, dest, prefix):
     assert(meta_df.shape[1]==9)
     assert(meta_df.shape[0] == dataset_df.shape[0])
 
-    assert(meta_df.shape[0]==database_df.shape[0])
+    assert(meta_df.shape[0]==db_flat.shape[0])
     for s in database_ns_df.itertuples():
         date = meta_df['date'] == s.Date
         dog = meta_df['dog'] == s.DogName
@@ -95,9 +95,9 @@ def remove_samples(database, dataset, metaset, dest, prefix):
         sensor = meta_df['sensor_number'] == s.SensorNumber
         condition = date & dog & run & ps & sensor
         if meta_df[condition].empty:
-            print('Did not find raw data:\n',s.Date, ',', s.DogName, ', Run:', s.Run, ', Pass:', s.Pass, ',Sensor:', s.SensorNumber, '\n')
+            print('Did not find a data row for:\n',s.Date, ',', s.DogName, ', Run:', s.Run, ', Pass:', s.Pass, ',Sensor:', s.SensorNumber, '\n')
         else:
-            print('Found:\n', s.Date, ',', s.DogName, ',', s.Run, ',', s.Pass, ',', s.SensorNumber) 
+            print('Found data row for:\n', s.Date, ',', s.DogName, ',', s.Run, ',', s.Pass, ',', s.SensorNumber) 
             print('Found data is:\n', meta_df[condition].head(), '\n')
             print(meta_df[condition].shape[0])
             assert(meta_df[condition].shape[0]==1)
@@ -109,9 +109,9 @@ def remove_samples(database, dataset, metaset, dest, prefix):
     assert(meta_df.shape[0]==dataset_df.shape[0])
     if dest:
         dest_dataset = dest + '/' + prefix + 'dataset.txt'
-        dest_metaset = dest + '/' + prefix + 'metaset.txt'
+        dest_meta = dest + '/' + prefix + 'metaset.txt'
         manager.save_dataset(dest_dataset, dataset_df, verbose=True)
-        manager.save_meta(dest_metaset, meta_df, verbose=True)
+        manager.save_meta(dest_meta, meta_df, verbose=True)
 
 
 def main():
