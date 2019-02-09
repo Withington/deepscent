@@ -8,7 +8,7 @@ import datetime
 import numpy as np
 import pandas as pd
 
-from data_processing import helper
+from dataprocessing import manager
 
 def flatten_dog_behaviour_database(input, target):
     ''' Flatten an input dog behaviour database csv file by creating one 
@@ -18,7 +18,7 @@ def flatten_dog_behaviour_database(input, target):
     Write the output to file, at the specified destination. '''
 
     # Read in the data and remove unneeded rows and columns
-    data_input = helper.load_dog_behaviour_database(input)
+    data_input = manager.load_dog_behaviour_database(input)
     data = data_input[data_input['IsInfoRow']==False]
     # Drop unneeded columns
     cols = [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,32]
@@ -49,7 +49,7 @@ def flatten_dog_behaviour_database(input, target):
 
     # Save
     if target:
-        helper.save_dog_behaviour_flat_db(target, database_df, verbose=True)
+        manager.save_dog_behaviour_flat_db(target, database_df, verbose=True)
 
 
 def remove_samples(database, dataset, metaset, dest, prefix):
@@ -72,13 +72,13 @@ def remove_samples(database, dataset, metaset, dest, prefix):
         Prefix for naming the output dataset and metaset
     '''
 
-    database_df = helper.load_dog_behaviour_flat_db(database)
+    database_df = manager.load_dog_behaviour_flat_db(database)
     # Find any rows where y_pred is class 2, this is where the dog did not search the sample (e.g. dog behaviour was "NS")
     database_ns_df = database_df[database_df['y_pred']==2]
 
     # Load pressure sensor data
-    dataset_df = helper.load_dataset(dataset)
-    meta_df = helper.load_meta(metaset)
+    dataset_df = manager.load_dataset(dataset)
+    meta_df = manager.load_meta(metaset)
     print(dataset_df.head())
     print(meta_df.head())
     print(dataset_df.shape)
@@ -110,8 +110,8 @@ def remove_samples(database, dataset, metaset, dest, prefix):
     if dest:
         dest_dataset = dest + '/' + prefix + 'dataset.txt'
         dest_metaset = dest + '/' + prefix + 'metaset.txt'
-        helper.save_dataset(dest_dataset, dataset_df, verbose=True)
-        helper.save_meta(dest_metaset, meta_df, verbose=True)
+        manager.save_dataset(dest_dataset, dataset_df, verbose=True)
+        manager.save_meta(dest_metaset, meta_df, verbose=True)
 
 
 def main():

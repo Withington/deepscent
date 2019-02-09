@@ -9,12 +9,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from data_processing import helper
+from dataprocessing import manager
 
 def plot_file(input):
     ''' Plot the data in a single raw data csv file. '''
     print('Input file:', input)
-    df = helper.load_raw_data(input)
+    df = manager.load_raw_data(input)
     df = df.T
     print('Number of data points in the file:', df.shape[0])
     df.plot(subplots=True, ylim=(0,3), yticks=(0,1,2,3), legend=False, color='steelblue')
@@ -24,7 +24,7 @@ def plot_file(input):
 def plot_dataset(input):
     ''' Analyse and plot the input dataset txt file. '''
     print('Input file:', input)
-    df = helper.load_dataset(input)
+    df = manager.load_dataset(input)
     print('Input data shape:', df.shape)
     print('min is',np.min(df.iloc[:][1:].values))
     print('max is',np.max(df.iloc[:][1:].values))

@@ -8,7 +8,7 @@ import datetime
 import numpy as np
 import pandas as pd
 
-from data_processing import helper
+from dataprocessing import manager
 
 def data_size(input):
     ''' Input a pkl file listing all of the good raw data files. 
@@ -23,7 +23,7 @@ def data_size(input):
     size_info = []
     for i in range(0,n):
         file = good.at[i,'file']
-        raw_data = helper.load_raw_data_as_np(file)
+        raw_data = manager.load_raw_data_as_np(file)
         num_data_points = raw_data.shape[1]
         size_info.append((file, raw_data.shape[0], num_data_points))
         if num_data_points > max:
@@ -65,7 +65,7 @@ def create_dataset(input, target='', max_cols=12000, verbose=False):
     meta = list()
     for i in range(n):
         file = good.at[i,'file']
-        d_i = helper.load_raw_data_as_np(file)
+        d_i = manager.load_raw_data_as_np(file)
         # Set the number of columns by truncating or padding with zeros.
         cols = d_i.shape[1]
         if cols > max_cols:
@@ -103,8 +103,8 @@ def create_dataset(input, target='', max_cols=12000, verbose=False):
         output_file = Path(target)
         output_file_meta = Path(str(output_file.parent) + \
             '/' + output_file.stem + '_metaset.txt')
-        helper.save_dataset_from_np(output_file, data, verbose=True)
-        helper.save_meta_from_np(output_file_meta, np.array(meta), verbose=True)
+        manager.save_dataset_from_np(output_file, data, verbose=True)
+        manager.save_meta_from_np(output_file_meta, np.array(meta), verbose=True)
 
     print('Number of time series data points used:', max_cols)
     print('Dataset shape:', data.shape) 

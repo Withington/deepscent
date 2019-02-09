@@ -3,10 +3,10 @@
 
 import argparse
 
-from data_processing import class_info
-from data_processing import import_data
-from data_processing import split_data
-from data_processing import plotting
+from dataprocessing import class_info
+from dataprocessing import import_data
+from dataprocessing import split_data
+from dataprocessing import plotting
 
 
 def main():

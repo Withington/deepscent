@@ -7,11 +7,11 @@ import pandas as pd
 
 from hamcrest import assert_that, equal_to, is_
 
-from data_processing import class_info
-from data_processing import import_data
-from data_processing import filter_data
-from data_processing import split_data
-from data_processing import helper
+from dataprocessing import class_info
+from dataprocessing import import_data
+from dataprocessing import filter_data
+from dataprocessing import split_data
+from dataprocessing import manager
 
 
 def test_position():
@@ -113,7 +113,7 @@ def test_import_data_save():
     dataset_shape = import_data.create_dataset(input, target, cols)
     assert_that(dataset_shape, equal_to((expected_good*3,cols+1)))
     # Test meta data
-    loaded_meta = helper.load_meta(target_meta)
+    loaded_meta = manager.load_meta(target_meta)
     i = 10
     assert_that(loaded_meta.iloc[i]['filename'], equal_to('2017_11_06-11_38-Rex_5_2_T3.csv'))
     expected_time = datetime.datetime(2017, 11, 6, 11, 38)
@@ -126,17 +126,17 @@ def test_import_data_save():
     assert_that(loaded_meta.iloc[i]['sensor_number'], equal_to(1))
     assert_that(loaded_meta.iloc[i]['class'], equal_to(0)) 
     # Test the data
-    loaded = helper.load_dataset_as_np(target)
+    loaded = manager.load_dataset_as_np(target)
     raw_filename = loaded_meta.iloc[i]['filename']
-    raw_loaded = helper.load_raw_data_as_np('data/test_data/raw_data/'+raw_filename)
+    raw_loaded = manager.load_raw_data_as_np('data/test_data/raw_data/'+raw_filename)
     cols = raw_loaded.shape[1]
     assert_that(loaded[i][1:cols+1].all(), equal_to(raw_loaded[1][:cols].all())) 
 
 
 def compare_data(raw_data_path, dataset_file, meta_file, i=None):
     ''' Compare a row from the dataset against the corresponding raw data file. '''
-    loaded_dataset = helper.load_dataset_as_np(dataset_file)   
-    loaded_meta = helper.load_meta(meta_file)
+    loaded_dataset = manager.load_dataset_as_np(dataset_file)   
+    loaded_meta = manager.load_meta(meta_file)
     # Select a row at random.
     rows = loaded_meta.shape[0]
     if i:
@@ -152,7 +152,7 @@ def compare_data(raw_data_path, dataset_file, meta_file, i=None):
         print('Testing ', dataset_file, 'row', i, 'against', f)
         count = count+1
         assert_that(count, equal_to(1))
-        raw_loaded = helper.load_raw_data_as_np(f)
+        raw_loaded = manager.load_raw_data_as_np(f)
         cols = raw_loaded.shape[1]
         assert_that(loaded_dataset[i][1:cols+1].all(), 
             equal_to(raw_loaded[sensor_num][:cols].all())) 
@@ -257,7 +257,7 @@ def test_filter_data():
     input = 'data/test_data/samson/dog_behaviour_database_samson.csv'
     target = 'data/test_data/samson/dog_behaviour_database_samson_flat.csv'
     filter_data.flatten_dog_behaviour_database(input, target)
-    loaded_target = helper.load_dog_behaviour_flat_db(target)
+    loaded_target = manager.load_dog_behaviour_flat_db(target)
     assert_that(loaded_target.shape[0], equal_to(6*3))
     assert_that(loaded_target.shape[1], equal_to(10))
 
