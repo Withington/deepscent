@@ -113,21 +113,21 @@ def test_import_data_save():
     dataset_shape = import_data.create_dataset(input, target, cols)
     assert_that(dataset_shape, equal_to((expected_good*3,cols+1)))
     # Test meta data
-    loaded_meta = manager.load_meta(target_meta)
+    meta = manager.load_meta(target_meta)
     i = 10
-    assert_that(loaded_meta.iloc[i]['filename'], equal_to('2017_11_06-11_38-Rex_5_2_T3.csv'))
+    assert_that(meta.iloc[i]['filename'], equal_to('2017_11_06-11_38-Rex_5_2_T3.csv'))
     expected_time = datetime.datetime(2017, 11, 6, 11, 38)
-    assert_that(loaded_meta.iloc[i]['date'].date(), equal_to(expected_time.date()))
-    assert_that(loaded_meta.iloc[i]['time'], equal_to(str(expected_time.time())))
-    assert_that(loaded_meta.iloc[i]['dog'], equal_to('Rex'))
-    assert_that(loaded_meta.iloc[i]['run'], equal_to(5))
-    assert_that(loaded_meta.iloc[i]['pass'], equal_to(2))
-    assert_that(loaded_meta.iloc[i]['positive_position'], equal_to('T3'))
-    assert_that(loaded_meta.iloc[i]['sensor_number'], equal_to(1))
-    assert_that(loaded_meta.iloc[i]['class'], equal_to(0)) 
+    assert_that(meta.iloc[i]['date'].date(), equal_to(expected_time.date()))
+    assert_that(meta.iloc[i]['time'], equal_to(str(expected_time.time())))
+    assert_that(meta.iloc[i]['dog'], equal_to('Rex'))
+    assert_that(meta.iloc[i]['run'], equal_to(5))
+    assert_that(meta.iloc[i]['pass'], equal_to(2))
+    assert_that(meta.iloc[i]['positive_position'], equal_to('T3'))
+    assert_that(meta.iloc[i]['sensor_number'], equal_to(1))
+    assert_that(meta.iloc[i]['class'], equal_to(0)) 
     # Test the data
     loaded = manager.load_dataset_as_np(target)
-    raw_filename = loaded_meta.iloc[i]['filename']
+    raw_filename = meta.iloc[i]['filename']
     raw_loaded = manager.load_raw_data_as_np('data/test_data/raw_data/'+raw_filename)
     cols = raw_loaded.shape[1]
     assert_that(loaded[i][1:cols+1].all(), equal_to(raw_loaded[1][:cols].all())) 
@@ -135,18 +135,18 @@ def test_import_data_save():
 
 def compare_data(raw_data_path, dataset_file, meta_file, i=None):
     ''' Compare a row from the dataset against the corresponding raw data file. '''
-    loaded_dataset = manager.load_dataset_as_np(dataset_file)   
-    loaded_meta = manager.load_meta(meta_file)
-    # Select a row at random.
-    rows = loaded_meta.shape[0]
+    dataset = manager.load_dataset_as_np(dataset_file)   
+    meta = manager.load_meta(meta_file)
+    # Select a row in the dataset
+    rows = meta.shape[0]
     if i:
         assert(i<rows)
     else:
         i = np.random.randint(0,rows)
-    filename = loaded_meta.iloc[i]['filename']
-    files = raw_data_path.rglob('**/'+filename)
-    sensor_num = loaded_meta.iloc[i]['sensor_number']
+    raw_data_filename = meta.iloc[i]['filename']
     # Find the corresponding raw data file and test dataset against it.
+    files = raw_data_path.rglob('**/'+raw_data_filename)
+    sensor_num = meta.iloc[i]['sensor_number']
     count = 0
     for f in files:
         print('Testing ', dataset_file, 'row', i, 'against', f)
@@ -154,7 +154,7 @@ def compare_data(raw_data_path, dataset_file, meta_file, i=None):
         assert_that(count, equal_to(1))
         raw_loaded = manager.load_raw_data_as_np(f)
         cols = raw_loaded.shape[1]
-        assert_that(loaded_dataset[i][1:cols+1].all(), 
+        assert_that(dataset[i][1:cols+1].all(), 
             equal_to(raw_loaded[sensor_num][:cols].all())) 
 
 
@@ -289,3 +289,5 @@ def test_remove_samples():
     meta_file = 'data/test_data/samson/'+label+'_meta.txt'
     print('Testing dataset', dataset_file, 'and', meta_file)
     compare_data(raw_data_path, dataset_file, meta_file) 
+    for i in range(0,15):
+        compare_data(raw_data_path, dataset_file, meta_file, i=i) 
