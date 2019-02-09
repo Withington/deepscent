@@ -52,7 +52,7 @@ def flatten_dog_behaviour_database(input, target):
         manager.save_dog_behaviour_flat_db(target, db_flat, verbose=True)
 
 
-def remove_samples(database, dataset, metaset, dest, prefix):
+def remove_samples(database, dataset, meta, dest, label):
     ''' Remove samples where the sample pot was not searched. This 
     information is given in the dog behaviour database. In the Excel
     file it was marked 'NS'. In the csv file, the predicted class
@@ -64,12 +64,12 @@ def remove_samples(database, dataset, metaset, dest, prefix):
         The flattened dog behaviour database csv file
     dataset : str
         An array of pressure sensor data. One row per sample
-    metaset : str
+    meta : str
         Meta data corresponding to the dataset. One row per sample
     dest: str
-        File directory for saving the new dataset and metaset
-    prefix: str
-        Prefix for naming the output dataset and metaset
+        File directory for saving the new dataset and meta data
+    label: str
+        Label for naming the output dataset and meta data files
     '''
 
     db_flat = manager.load_dog_behaviour_flat_db(database)
@@ -78,7 +78,7 @@ def remove_samples(database, dataset, metaset, dest, prefix):
 
     # Load pressure sensor data
     dataset_df = manager.load_dataset(dataset)
-    meta_df = manager.load_meta(metaset)
+    meta_df = manager.load_meta(meta)
     print(dataset_df.head())
     print(meta_df.head())
     print(dataset_df.shape)
@@ -108,8 +108,8 @@ def remove_samples(database, dataset, metaset, dest, prefix):
  
     assert(meta_df.shape[0]==dataset_df.shape[0])
     if dest:
-        dest_dataset = dest + '/' + prefix + 'dataset.txt'
-        dest_meta = dest + '/' + prefix + 'metaset.txt'
+        dest_dataset = dest + '/' + label + '.txt'
+        dest_meta = dest + '/' + label + '_meta.txt'
         manager.save_dataset(dest_dataset, dataset_df, verbose=True)
         manager.save_meta(dest_meta, meta_df, verbose=True)
 

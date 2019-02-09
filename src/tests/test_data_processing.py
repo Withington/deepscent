@@ -107,7 +107,7 @@ def test_import_data_save():
         class_info.parse_filenames(source, dest)
     input = 'data/test_data/class_info/good.pkl'
     target = Path('data/test_data/datasets/test_output_dataset.txt')
-    target_meta = Path('data/test_data/datasets/test_output_dataset_metaset.txt') 
+    target_meta = Path('data/test_data/datasets/test_output_dataset_meta.txt') 
     cols = 6000
     expected_good = 8
     dataset_shape = import_data.create_dataset(input, target, cols)
@@ -163,7 +163,7 @@ def test_dataset():
     i = 7
     raw_data_path = Path('data/test_data/raw_data')
     dataset_file = Path('data/test_data/datasets/test_output_dataset.txt')
-    meta_file = Path('data/test_data/datasets/test_output_dataset_metaset.txt')
+    meta_file = Path('data/test_data/datasets/test_output_dataset_meta.txt')
     compare_data(raw_data_path, dataset_file, meta_file, i)
 
 
@@ -171,7 +171,7 @@ def test_dataset_random():
     ''' Test a random row of the dataset against the corresponding raw data file. '''
     raw_data_path = Path('data/test_data/raw_data')
     dataset_file = Path('data/test_data/datasets/test_output_dataset.txt')
-    meta_file = Path('data/test_data/datasets/test_output_dataset_metaset.txt')
+    meta_file = Path('data/test_data/datasets/test_output_dataset_meta.txt')
     compare_data(raw_data_path, dataset_file, meta_file)
 
 
@@ -185,25 +185,25 @@ def test_dataset_random_user():
     config.read(config_files)
     raw_data_path = Path(config.get('files', 'raw_data_dir'))
     dataset_file = Path(config.get('files', 'dataset'))
-    meta_file = Path(config.get('files', 'metaset'))
+    meta_file = Path(config.get('files', 'meta'))
     compare_data(raw_data_path, dataset_file, meta_file)
     # Check the training set
     dataset_file = Path(config.get('files', 'dataset_train'))
-    meta_file = Path(config.get('files', 'metaset_train'))
+    meta_file = Path(config.get('files', 'meta_train'))
     compare_data(raw_data_path, dataset_file, meta_file)
     # Check the test set
     dataset_file = Path(config.get('files', 'dataset_test'))
-    meta_file = Path(config.get('files', 'metaset_test'))
+    meta_file = Path(config.get('files', 'meta_test'))
     compare_data(raw_data_path, dataset_file, meta_file)
 
 def test_split_data():
     ''' Test randomly splitting the dataset and meta data into two sets - training and test sets '''
     dataset_file = 'data/test_data/datasets/test_output_dataset.txt'
-    meta_file = 'data/test_data/datasets/test_output_dataset_metaset.txt'
+    meta_file = 'data/test_data/datasets/test_output_dataset_meta.txt'
     dest = 'data/test_data/datasets'
-    label = 'test_output_'
+    label = 'test_output_dataset'
     split_data.split(dataset_file, meta_file, 0.2, dest=dest, label=label)
-    expected = Path(dest+'/'+label+'dataset_train.txt')
+    expected = Path(dest+'/'+label+'_TRAIN.txt')
     assert_that(expected.exists(), is_(True))
 
 
@@ -218,12 +218,12 @@ def test_split_data_reload():
     i = 2
     raw_data_path = Path(config.get('files', 'raw_data_dir'))
     dataset_file = Path(config.get('files', 'dataset_train'))
-    meta_file = Path(config.get('files', 'metaset_train'))
+    meta_file = Path(config.get('files', 'meta_train'))
     compare_data(raw_data_path, dataset_file, meta_file, i)
     compare_data(raw_data_path, dataset_file, meta_file) # Random i  
     # Test the _test set
     dataset_file = Path(config.get('files', 'dataset_test'))
-    meta_file = Path(config.get('files', 'metaset_test'))
+    meta_file = Path(config.get('files', 'meta_test'))
     compare_data(raw_data_path, dataset_file, meta_file, i)
     compare_data(raw_data_path, dataset_file, meta_file)  # Random i 
 
@@ -239,13 +239,13 @@ def test_split_data_user():
     i = 4
     raw_data_path = Path(config.get('files', 'raw_data_dir'))
     dataset_file = Path(config.get('files', 'dataset_train'))
-    meta_file = Path(config.get('files', 'metaset_train'))
+    meta_file = Path(config.get('files', 'meta_train'))
     print('Testing dataset', dataset_file, 'and', meta_file)
     compare_data(raw_data_path, dataset_file, meta_file, i)
     compare_data(raw_data_path, dataset_file, meta_file)  # Random i 
     # Test the _test set
     dataset_file = Path(config.get('files', 'dataset_test'))
-    meta_file = Path(config.get('files', 'metaset_test'))
+    meta_file = Path(config.get('files', 'meta_test'))
     print('Testing dataset', dataset_file, 'and', meta_file)
     compare_data(raw_data_path, dataset_file, meta_file, i)
     compare_data(raw_data_path, dataset_file, meta_file)  # Random i 
@@ -279,13 +279,13 @@ def test_remove_samples():
     create_samson_dataset()
     database = 'data/test_data/samson/dog_behaviour_database_samson_flat.csv'
     dataset = 'data/test_data/samson/samson_dataset.txt'
-    meta = 'data/test_data/samson/samson_dataset_metaset.txt'
+    meta = 'data/test_data/samson/samson_dataset_meta.txt'
     dest = 'data/test_data/samson'
-    prefix = 'test_filtered_output_'
-    filter_data.remove_samples(database, dataset, meta, dest, prefix)
+    label = 'test_filtered_dataset'
+    filter_data.remove_samples(database, dataset, meta, dest, label)
     # Load dataset and test against raw data files    
     raw_data_path = Path('data/test_data/samson/raw_data')
-    dataset_file = 'data/test_data/samson/'+prefix+'dataset.txt'
-    meta_file = 'data/test_data/samson/'+prefix+'metaset.txt'
+    dataset_file = 'data/test_data/samson/'+label+'.txt'
+    meta_file = 'data/test_data/samson/'+label+'_meta.txt'
     print('Testing dataset', dataset_file, 'and', meta_file)
     compare_data(raw_data_path, dataset_file, meta_file) 

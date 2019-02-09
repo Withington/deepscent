@@ -102,7 +102,7 @@ def create_dataset(input, target='', max_cols=12000, verbose=False):
     if target:
         output_file = Path(target)
         output_file_meta = Path(str(output_file.parent) + \
-            '/' + output_file.stem + '_metaset.txt')
+            '/' + output_file.stem + '_meta.txt')
         manager.save_dataset_from_np(output_file, data, verbose=True)
         manager.save_meta_from_np(output_file_meta, np.array(meta), verbose=True)
 

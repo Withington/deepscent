@@ -22,10 +22,10 @@ def split(dataset_file, meta_file, test_split, dest='', label='', shuffle=True):
         train_test_split(dataset_full, meta_full, test_size=test_split, shuffle=shuffle, random_state=seed)
     # Save to file
     if dest:
-        dataset_train_name = label + 'dataset_train.txt'
-        dataset_test_name = label + 'dataset_test.txt'
-        meta_train_name = label + 'metaset_train.txt'   
-        meta_test_name = label + 'metaset_test.txt'    
+        dataset_train_name = label + '_TRAIN.txt'
+        dataset_test_name = label + '_TEST.txt'
+        meta_train_name = label + '_TRAIN_meta.txt'   
+        meta_test_name = label + '_TEST_meta.txt'    
         manager.save_dataset_from_np(dest+'/'+dataset_train_name, dataset_train, verbose=True)
         manager.save_dataset_from_np(dest+'/'+dataset_test_name, dataset_test, verbose=True)
         manager.save_meta_from_np(dest+'/'+meta_train_name, meta_train, verbose=True)

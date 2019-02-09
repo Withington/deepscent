@@ -34,7 +34,7 @@ def plot_dataset(input):
     plt.suptitle('0: Negative scent sample, 1: Positive scent sample')
     plt.show()
     plt.figure(2)
-    plt.suptitle('A few example time series')
+    plt.suptitle('A few example time series from file: '+input)
     i = int(np.round(np.random.random_sample()*(df.shape[0]-1)/3))
     i = i * 3
     df.iloc[i][1:].plot(label='Sample '+str(i)+' class: '+str(df.iloc[i][0]))
