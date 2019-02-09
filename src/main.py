@@ -5,6 +5,7 @@ import argparse
 
 from dataprocessing import class_info
 from dataprocessing import import_data
+from dataprocessing import filter_data
 from dataprocessing import split_data
 from dataprocessing import plotting
 
@@ -19,37 +20,55 @@ def main():
     # Get meta data from file names. Discard some files based on their name.
     class_info.parse_filenames(args.source, args.dest)
     # From the 'good' files, get the pressure sensor data and save it all as one dataset.
-    import_data.create_dataset(args.dest+'/good.pkl', args.dest+'/private_dataset_full.txt', args.max_cols, args.verbose)
+    import_data.create_dataset(args.dest+'/good.pkl', args.dest+'/private_dataset_prefilter.txt', args.max_cols, args.verbose)
+    
+    # Use the dog behaviour database to remove any data samples where the dog did not search (the database entry was 'NS'
+    db_full = args.dest+'/dog_behaviour_database_private.csv'
+    db_flat = args.dest+'/dog_behaviour_database_private_flat.csv'
+    dataset = args.dest+'/private_dataset_prefilter.txt'
+    meta = args.dest+'/private_dataset_prefilter_meta.txt'
+    label = 'private_data_all'
+    filter_data.flatten_dog_behaviour_database(db_full, db_flat)
+    filter_data.remove_samples(db_flat, dataset, meta, args.dest, label)
+    
     # Split the dataset into a training set and a test set.
     split=0.2
-    split_data.split(args.dest+'/private_dataset_full.txt', \
-        args.dest+'/private_dataset_full_meta.txt', test_split=split, \
-        dest=args.dest, label='private_total')
+    dataset = args.dest+'/private_data_all.txt'
+    meta = args.dest+'/private_data_all_meta.txt'
+    label = 'private_data_all'
+    split_data.split(dataset, meta, test_split=split, \
+        dest=args.dest, label=label)
     # plot data
-    plotting.plot_dataset(args.dest+'/private_total_TRAIN.txt')
-    plotting.plot_dataset(args.dest+'/private_total_TEST.txt')
+    plotting.plot_dataset(args.dest+'/private_data_all_TRAIN.txt')
+    plotting.plot_dataset(args.dest+'/private_data_all_TEST.txt')
 
     # Further split the training dataset into a smaller training set 
-    # and a dev (test) set, as per the UCR datasets.
+    # and a dev (test) set.
     split=0.25
-    split_data.split(args.dest+'/private_total_TRAIN.txt', \
-        args.dest+'/private_total_TRAIN_meta.txt', test_split=split, \
-        dest=args.dest, label='private', shuffle=False)
+    dataset = args.dest+'/private_data_all_TRAIN.txt'
+    meta = args.dest+'/private_data_all_TRAIN_meta.txt'
+    label = 'private_data'
+    split_data.split(dataset, meta, test_split=split, \
+        dest=args.dest, label=label, shuffle=False)
     # plot data
-    plotting.plot_dataset(args.dest+'/private_TRAIN.txt')
-    plotting.plot_dataset(args.dest+'/private_TEST.txt')
+    plotting.plot_dataset(args.dest+'/private_data_TRAIN.txt')
+    plotting.plot_dataset(args.dest+'/private_data_TEST.txt')
 
     # Make a small training dataset for initial testing. Aiming
     # for a similar size to GunPoint 50 train, 150 test.
     mini_set_dest = args.dest+'/private_mini'
-    split=0.875 # To get about 200 in a training set
-    split_data.split(args.dest+'/private_total_TRAIN.txt', \
-        args.dest+'/private_total_TRAIN_meta.txt', test_split=split, \
-        dest=mini_set_dest, label='private_mini_total', shuffle=False)
+    split=0.875 # To get about 200 in a temporary training set
+    dataset = args.dest+'/private_data_all_TRAIN.txt'
+    meta = args.dest+'/private_data_all_TRAIN_meta.txt'
+    label = 'private_temp'
+    split_data.split(dataset, meta, test_split=split, \
+        dest=mini_set_dest, label=label, shuffle=False)
     split=0.75 # To get a train:test set of about 50 train, 150 test.
-    split_data.split(mini_set_dest+'/private_mini_total_TRAIN.txt', \
-        mini_set_dest+'/private_mini_total_TRAIN_meta.txt', test_split=split, \
-        dest=mini_set_dest, label='private_mini_', shuffle=False)
+    dataset = mini_set_dest+'/private_temp_TRAIN.txt'
+    meta = mini_set_dest+'/private_temp_TRAIN_meta.txt'
+    label = 'private_mini'
+    split_data.split(dataset, meta, test_split=split, \
+        dest=mini_set_dest, label=label, shuffle=False)
     # plot data
     plotting.plot_dataset(mini_set_dest+'/private_mini_TRAIN.txt')
     plotting.plot_dataset(mini_set_dest+'/private_mini_TEST.txt')
