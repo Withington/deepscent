@@ -8,14 +8,13 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
+from data_processing import helper
 
 def split(dataset_file, meta_file, test_split, dest='', label='', shuffle=True):
     seed = 99
     # Load dataset
-    dataset_file = Path(dataset_file)
-    meta_file = Path(meta_file)
-    loaded_dataset = np.loadtxt(dataset_file)
-    loaded_meta = pd.read_csv(meta_file, sep=',', parse_dates=['date'])
+    loaded_dataset = helper.load_dataset_as_np(dataset_file)
+    loaded_meta = helper.load_meta_as_np(meta_file)
     n = loaded_meta.shape[0]
     assert(n == loaded_dataset.shape[0])
     # Split dataset
@@ -28,21 +27,11 @@ def split(dataset_file, meta_file, test_split, dest='', label='', shuffle=True):
         dataset_test_name = label + 'dataset_test.txt'
         meta_train_name = label + 'metaset_train.txt'   
         meta_test_name = label + 'metaset_test.txt'    
-        with open(meta_file) as f:
-            meta_header = f.readline()    
-        meta_header = meta_header.strip('\n')  
-        meta_header = meta_header.strip('#')  
-        print('Saving data to:')
-        print(Path(dest+'/'+dataset_train_name).name)
-        np.savetxt(Path(dest+'/'+dataset_train_name), dataset_train, fmt='%f', delimiter=' ')
-        print(Path(dest+'/'+dataset_test_name).name)
-        np.savetxt(Path(dest+'/'+dataset_test_name), dataset_test, fmt='%f', delimiter=' ')       
-        print(Path(dest+'/'+meta_train_name).name)
-        np.savetxt(Path(dest+'/'+meta_train_name), meta_train, \
-            header=meta_header, comments='', fmt='%s', delimiter=',')
-        print(Path(dest+'/'+meta_test_name).name)
-        np.savetxt(Path(dest+'/'+meta_test_name), meta_test, \
-            header=meta_header, comments='', fmt='%s', delimiter=',')
+        helper.save_dataset_from_np(dest+'/'+dataset_train_name, dataset_train, verbose=True)
+        helper.save_dataset_from_np(dest+'/'+dataset_test_name, dataset_test, verbose=True)
+        helper.save_meta_from_np(dest+'/'+meta_train_name, meta_train, verbose=True)
+        helper.save_meta_from_np(dest+'/'+meta_test_name, meta_test, verbose=True)
+
 
 
 
