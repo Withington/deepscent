@@ -7,30 +7,87 @@ import argparse
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+import sklearn.utils
 
 from dataprocessing import manager
 
-def split(dataset_file, meta_file, test_split, dest='', label='', shuffle=True):
+def split(dataset_file, meta_file, test_split, dest='', label='', shuffle=True, stratify=None):
+    ''' Split the dataset and corresponding meta into train and test sets.
+    Save to dest. '''
+    dataset = manager.load_dataset_as_np(dataset_file)
+    meta = manager.load_meta_as_np(meta_file)
+    split_arrays(dataset, meta, test_split, dest, label, shuffle, stratify)
+
+def split_arrays(dataset, meta, test_split, dest='', label='', shuffle=True, stratify=None):
+    ''' Split the dataset and corresponding meta into train and test sets.
+    Save to dest. '''
     seed = 99
     np.random.seed(99)
-    # Load dataset
-    dataset_full = manager.load_dataset_as_np(dataset_file)
-    meta_full = manager.load_meta_as_np(meta_file)
-    assert(meta_full.shape[0] == dataset_full.shape[0])
+    assert(meta.shape[0] == dataset.shape[0])
     # Split dataset
     dataset_train, dataset_test, meta_train, meta_test = \
-        train_test_split(dataset_full, meta_full, test_size=test_split, shuffle=shuffle, random_state=seed)
+        train_test_split(dataset, meta, test_size=test_split, 
+        stratify=stratify, shuffle=shuffle, random_state=seed)
     # Save to file
     if dest:
         dataset_train_name = label + '_TRAIN.txt'
         dataset_test_name = label + '_TEST.txt'
         meta_train_name = label + '_TRAIN_meta.txt'   
-        meta_test_name = label + '_TEST_meta.txt'    
+        meta_test_name = label + '_TEST_meta.txt' 
+        print('\ndataset_test:', dataset_test)   # todo lmtw remove
         manager.save_dataset_from_np(dest+'/'+dataset_train_name, dataset_train, verbose=True)
         manager.save_dataset_from_np(dest+'/'+dataset_test_name, dataset_test, verbose=True)
         manager.save_meta_from_np(dest+'/'+meta_train_name, meta_train, verbose=True)
         manager.save_meta_from_np(dest+'/'+meta_test_name, meta_test, verbose=True)
 
+
+def create_balanced_dataset(dataset_file, meta_file, num, class_balance, shuffle=True):
+    ''' Create a dataset of the given number of rows and with the given
+    class balance between the two classes. Return the balanced dataset 
+    and corresponding meta DataFrames. '''
+    dataset = manager.load_dataset_as_np(dataset_file)
+    meta = manager.load_meta_as_np(meta_file)
+    dataset_bal, meta_bal = create_balanced_dataset_from_arrays(
+        dataset, meta, num, class_balance, shuffle)
+    return dataset_bal, meta_bal
+
+def create_balanced_dataset_from_arrays(dataset, meta, num, class_balance, shuffle=True):
+    ''' Create a dataset of the given number of rows and with the given
+    class balance between the two classes. Return the balanced dataset 
+    and corresponding meta DataFrames. '''
+    assert(class_balance <= 1)
+    np.random.seed(99)   
+    assert(meta.shape[0] == dataset.shape[0])
+    assert(num <= meta.shape[0])
+
+    if shuffle:
+        dataset, meta = sklearn.utils.shuffle(dataset, meta)
+    
+    dataset_bal = np.empty((num,dataset.shape[1]))
+    meta_bal = list()
+    n0 = round(num*class_balance)
+    n1 = num - n0
+    c0 = 0
+    c1 = 0
+    for i in range(0,meta.shape[0]):
+        if (c0 + c1) == num:
+            break
+        y = int(dataset[i][0])
+        if y == 0:
+            if c0 < n0:
+                dataset_bal[c0+c1] = dataset[i]
+                meta_bal.append(meta[i])
+                c0 = c0 + 1
+        else:
+            assert(y == 1), 'Dataset must have only two classes - 0 and 1'
+            if c1 < n1:
+                dataset_bal[c0+c1] = dataset[i]
+                meta_bal.append(meta[i])
+                c1 = c1 + 1
+
+    assert((c0 + c1) == num), f'A balanced dataset of {num} rows could not be created.'    
+    meta_bal = np.array(meta_bal)
+    return dataset_bal, meta_bal
 
 
 

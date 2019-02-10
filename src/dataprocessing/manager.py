@@ -145,4 +145,8 @@ def save_meta_from_np(target, array, verbose=False):
     np.savetxt(file, array, header=meta_header_as_str(), comments='', fmt='%s', delimiter=',')
 
 
+def meta_df_from_np(array):
+    ''' Create a pandas DataFrame from a numpy array of meta data '''
+    assert(array.shape[1]==len(meta_header())), f'Array has {array.shape[1]} columns but expected {len(meta_header())} columns'
+    return pd.DataFrame(array, columns=meta_header())
 

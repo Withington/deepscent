@@ -4,6 +4,8 @@ import configparser
 
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
+import sklearn.utils
 
 from hamcrest import assert_that, equal_to, is_
 
@@ -134,10 +136,41 @@ def test_import_data_save():
 
 
 def compare_data(raw_data_path, dataset_file, meta_file, i=None):
-    ''' Compare a row from the dataset against the corresponding raw data file. '''
+    ''' Compare a row from the dataset against the corresponding raw data file. 
+    
+    Parameters
+    ----------
+    raw_data_path: str
+        Path to a directory of raw pressure sensor data csv files.
+    dataset_file: str
+        An array of pressure sensor data in a txt file. One row per sample
+    meta_file: str
+        Meta data corresponding to the dataset in a txt file. One row per sample
+    i: int
+        index of the dataset row to test. Selected at random if None.
+    '''
     dataset = manager.load_dataset_as_np(dataset_file)   
     meta = manager.load_meta(meta_file)
+    compare_data_arrays(raw_data_path, dataset, meta, i)
+
+
+def compare_data_arrays(raw_data_path, dataset, meta, i=None):
+    ''' Compare a row from the dataset against the corresponding raw data file.
+        
+    Parameters
+    ----------
+    raw_data_path: str
+        Path to a directory of raw pressure sensor data csv files.
+    dataset: numpy array
+        An array of pressure sensor data. One row per sample
+    meta: numpy array
+        Meta data corresponding to the dataset. One row per sample
+    i: int
+        index of the dataset row to test. Selected at random if None.
+    '''
+    
     # Select a row in the dataset
+    assert(dataset.shape[0] == meta.shape[0])
     rows = meta.shape[0]
     if i:
         assert(i<rows)
@@ -149,7 +182,7 @@ def compare_data(raw_data_path, dataset_file, meta_file, i=None):
     sensor_num = meta.iloc[i]['sensor_number']
     count = 0
     for f in files:
-        print('Testing ', dataset_file, 'row', i, 'against', f)
+        print('Testing row', i, 'against', f)
         count = count+1
         assert_that(count, equal_to(1))
         raw_loaded = manager.load_raw_data_as_np(f)
@@ -297,13 +330,20 @@ def test_remove_samples():
 def test_remove_samples_duplicate_db_rows():
     ''' Test removing NS samples where the dog behaviour database contains 
     more than one row with the same date, dog, run, pass and sensor number '''
-    database = 'data/test_data/samson/duplicate_test_dog_behaviour_database_flat.csv'
-    dataset = 'data/test_data/samson/duplicate_test_dataset.txt'
-    meta = 'data/test_data/samson/duplicate_test_dataset_meta.txt'
+    db_flat_file = 'data/test_data/samson/duplicate_test_dog_behaviour_database_flat.csv'
+    dataset_file = 'data/test_data/samson/duplicate_test_dataset.txt'
+    meta_file = 'data/test_data/samson/duplicate_test_dataset_meta.txt'
     dest = 'data/test_data/samson'
     label = 'duplicate_test_filtered_dataset'
-    filter_data.remove_samples(database, dataset, meta, dest, label)
-    # Load dataset and test against raw data files    
+    # Load files and shuffle, for thorough test
+    db_flat = manager.load_dog_behaviour_flat_db(db_flat_file)
+    dataset_np = manager.load_dataset_as_np(dataset_file)
+    meta_np = manager.load_meta_as_np(meta_file)
+    sklearn.utils.shuffle(dataset_np, meta_np)
+    dataset_df = pd.DataFrame(dataset_np)
+    meta_df = manager.meta_df_from_np(meta_np)
+    filter_data.remove_samples_from_df(db_flat, dataset_df, meta_df, dest, label)
+    # Test against raw data files    
     raw_data_path = Path('data/test_data/samson/raw_data')
     dataset_file = 'data/test_data/samson/'+label+'.txt'
     meta_file = 'data/test_data/samson/'+label+'_meta.txt'
@@ -311,3 +351,62 @@ def test_remove_samples_duplicate_db_rows():
     compare_data(raw_data_path, dataset_file, meta_file) 
     for i in range(0,15):
         compare_data(raw_data_path, dataset_file, meta_file, i=i) 
+
+
+def test_create_balanced_dataset_from_arrays():
+    ''' Test creating a balanced dataset of a given size '''
+    # Create test data
+    n = 40
+    dataset = np.random.rand(n,5)
+    meta = np.random.rand(n,3)
+    for i in range(0,n):
+        if i % 4 == 0:
+            dataset[i][0] = 1
+        else:
+            dataset[i][0] = 0
+        dataset[i][1] = i
+        meta[i][0] = i
+    
+    # Get balanced dataset
+    num = 20
+    class_balance = 0.6
+    dataset_bal, meta_bal = split_data.create_balanced_dataset_from_arrays(
+        dataset, meta, num, class_balance)
+
+    # Check output
+    df = pd.DataFrame(dataset_bal)
+    assert_that(df[df[0]==0].count()[0], equal_to(num*class_balance))
+    assert_that(df[df[0]==1].count()[0], equal_to(num*(1-class_balance)))
+    for i in range(0,num):
+        assert_that(dataset_bal[i][1], equal_to(meta_bal[i][0]))
+
+    # Test stratification
+    test_size = 0.25
+    dataset_train, dataset_test, __, __ = \
+        train_test_split(dataset_bal, meta_bal, test_size=test_size, 
+        stratify=dataset_bal[:,0])
+    
+    df = pd.DataFrame(dataset_train)
+    assert_that(df[df[0]==0].count()[0], equal_to(num*class_balance*(1-test_size)))
+    df = pd.DataFrame(dataset_test)
+    assert_that(df[df[0]==0].count()[0], equal_to(num*class_balance*test_size))
+
+
+
+def test_create_balanced_dataset():
+    ''' Using samson data, test that the balanced dataset is created correctly '''
+    raw_data_path = Path('data/test_data/samson/raw_data')
+    dataset = 'data/test_data/samson/duplicate_test_filtered_dataset.txt'
+    meta = 'data/test_data/samson/duplicate_test_filtered_dataset_meta.txt'
+    num = 8
+    class_balance = 0.25
+    dataset_bal_np, meta_bal_np = split_data.create_balanced_dataset(
+        dataset, meta, num, class_balance)
+
+    # Check output
+    df = pd.DataFrame(dataset_bal_np)
+    assert_that(df[df[0]==0].count()[0], equal_to(num*class_balance))
+    assert_that(df[df[0]==1].count()[0], equal_to(num*(1-class_balance)))
+    meta_bal = manager.meta_df_from_np(meta_bal_np)
+    for i in range(0,df.shape[0]):
+        compare_data_arrays(raw_data_path, df, meta_bal, i=i) 

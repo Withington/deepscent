@@ -59,7 +59,33 @@ class DroppedRowsInfo:
         self.multi_match = []   # Rows dropped where there were multiple matching rows so all had to be dropped
         self.no_match = [] 
 
-def remove_samples(database, dataset, meta, dest, label):
+def remove_samples(db_flat_file, dataset_file, meta_file, dest, label, verbose=True):
+    ''' Remove samples where the sample pot was not searched. This 
+    information is given in the dog behaviour database. In the Excel
+    file it was marked 'NS'. In the csv file, the predicted class
+    (i.e. the class indicated by the dog's behaviour) is set to 2
+
+    Parameters
+    ----------
+    db_flat_file: str
+        The flattened dog behaviour database csv file
+    dataset_file: str
+        An array of pressure sensor data. One row per sample
+    meta_file: str
+        Meta data corresponding to the dataset. One row per sample
+    dest: str
+        File directory for saving the new dataset and meta data
+    label: str
+        Label for naming the output dataset and meta data files
+    verbose: bool
+        Set to True to print out info
+    '''
+    db_flat = manager.load_dog_behaviour_flat_db(db_flat_file)
+    dataset_df = manager.load_dataset(dataset_file)
+    meta_df = manager.load_meta(meta_file)
+    remove_samples_from_df(db_flat, dataset_df, meta_df, dest, label, verbose)
+
+def remove_samples_from_df(db_flat, dataset_df, meta_df, dest, label, verbose=True):
     ''' Remove samples where the sample pot was not searched. This 
     information is given in the dog behaviour database. In the Excel
     file it was marked 'NS'. In the csv file, the predicted class
@@ -67,25 +93,21 @@ def remove_samples(database, dataset, meta, dest, label):
 
     Parameters
     ----------
-    database : str
-        The flattened dog behaviour database csv file
-    dataset : str
+    db_flat: DataFrame
+        The flattened dog behaviour database
+    dataset_df: DataFrame
         An array of pressure sensor data. One row per sample
-    meta : str
+    meta_df: DataFrame
         Meta data corresponding to the dataset. One row per sample
     dest: str
         File directory for saving the new dataset and meta data
     label: str
         Label for naming the output dataset and meta data files
+    verbose: bool
+        Set to True to print out info
     '''
 
-    # Dog behaviour database
-    db_flat = manager.load_dog_behaviour_flat_db(database)
     db_ns = db_flat[db_flat['y_pred']==2] # Class 2 - where the dog did not search the sample (e.g. dog behaviour was "NS")
-
-    # Pressure sensor data
-    dataset_df = manager.load_dataset(dataset)
-    meta_df = manager.load_meta(meta)
     dataset_shape_orig = dataset_df.shape
     meta_shape_orig = meta_df.shape
     assert(meta_df.shape[0] == dataset_df.shape[0])
@@ -114,14 +136,17 @@ def remove_samples(database, dataset, meta, dest, label):
     if dest:
         dest_dataset = dest + '/' + label + '.txt'
         dest_meta = dest + '/' + label + '_meta.txt'
-        manager.save_dataset(dest_dataset, dataset_df, verbose=True)
-        manager.save_meta(dest_meta, meta_df, verbose=True)
-    print('\nDatabase samples marked as not searched but where no matching dataset row was found:\n', info.no_match)
-    print('\nDropped rows where single matching dataset row was found:\n', info.single_match)
-    print('\nDropped rows where there were two matching rows and the timestamp was used to figure out which row(s) to drop:\n', info.two_match)
-    print('\nDropped rows where there were multiple matching rows and all had to be dropped:\n', info.multi_match)   
-    print('\nDataset shape changed from', dataset_shape_orig, 'to', dataset_df.shape)
-    print('Meta data shape changed from', meta_shape_orig, 'to', meta_df.shape)
+        manager.save_dataset(dest_dataset, dataset_df, verbose=verbose)
+        manager.save_meta(dest_meta, meta_df, verbose=verbose)
+    if verbose:
+        print('\nDatabase samples marked as not searched but where no matching dataset row was found:\n', info.no_match)
+        print('\nDropped rows where single matching dataset row was found:\n', info.single_match)
+        print('\nDropped rows where there were two matching rows and the timestamp was used to figure out which row(s) to drop:\n', info.two_match)
+        print('\nDropped rows where there were multiple matching rows and all had to be dropped:\n', info.multi_match)   
+        print('\nDropped rows where there were multiple matching rows and all had to be dropped:\n', info.multi_match)   
+        print('\nDropped rows where there were multiple matching rows and all had to be dropped:\n', info.multi_match)   
+        print('\nDataset shape changed from', dataset_shape_orig, 'to', dataset_df.shape)
+        print('Meta data shape changed from', meta_shape_orig, 'to', meta_df.shape)
 
 
 def db_condition(db_flat, db_row):
@@ -148,9 +173,11 @@ def meta_condition(meta_df, db_row):
 
 def drop_a_row(meta_df, dataset_df, condition):
     assert(meta_df[condition].shape[0] == 1)
-    i = meta_df.index.get_loc(meta_df[condition].iloc[-1].name)
+    label = meta_df[condition].iloc[-1].name
+    i = meta_df.index.get_loc(label)
     meta_df.drop(meta_df.index[i], inplace=True)
     dataset_df.drop(dataset_df.index[i], inplace=True)
+    assert(meta_df[condition].empty)
 
 def drop_this_row(meta_df, dataset_df, meta_df_row):
     i = meta_df.index.get_loc(meta_df_row.Index)
@@ -166,6 +193,7 @@ def drop_all_rows(meta_df, condition, info, dataset_df):
     for m in meta_df[condition].itertuples():
         info.multi_match.append(m)
         drop_this_row(meta_df, dataset_df, m)
+    assert(meta_df[condition].empty)
 
 
 def handle_two_rows(meta_rows, meta_df, db_rows, condition, info, dataset_df):

@@ -54,24 +54,26 @@ def main():
     plotting.plot_dataset(args.dest+'/private_data_TRAIN.txt')
     plotting.plot_dataset(args.dest+'/private_data_TEST.txt')
 
-    # Make a small training dataset for initial testing. Aiming
-    # for a similar size to GunPoint 50 train, 150 test.
+    # Make a small training dataset for initial testing. 
+    # Like GunPoint - 50 train, 150 test.
+    # Make it a balanced dataset.
+    num_rows = 200
+    class_balance = 0.5
+    dataset_bal, meta_bal = split_data.create_balanced_dataset(
+        dataset, meta, num_rows, class_balance, shuffle=False)
+    split=0.75 
     mini_set_dest = args.dest+'/private_mini'
-    split=0.875 # To get about 200 in a temporary training set
-    dataset = args.dest+'/private_data_all_TRAIN.txt'
-    meta = args.dest+'/private_data_all_TRAIN_meta.txt'
-    label = 'private_temp'
-    split_data.split(dataset, meta, test_split=split, \
-        dest=mini_set_dest, label=label, shuffle=False)
-    split=0.75 # To get a train:test set of about 50 train, 150 test.
-    dataset = mini_set_dest+'/private_temp_TRAIN.txt'
-    meta = mini_set_dest+'/private_temp_TRAIN_meta.txt'
     label = 'private_mini'
-    split_data.split(dataset, meta, test_split=split, \
-        dest=mini_set_dest, label=label, shuffle=False)
-    # plot data
+    split_data.split_arrays(dataset_bal, meta_bal, split, 
+        mini_set_dest, label, stratify=dataset_bal[:,0])
     plotting.plot_dataset(mini_set_dest+'/private_mini_TRAIN.txt')
     plotting.plot_dataset(mini_set_dest+'/private_mini_TEST.txt')
+
+
+    #todo lmtw make balanced 1 dog sample
+
+
+
 
 if __name__ == "__main__":
     main()

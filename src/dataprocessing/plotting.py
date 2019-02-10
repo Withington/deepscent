@@ -13,17 +13,18 @@ from dataprocessing import manager
 
 def plot_file(input):
     ''' Plot the data in a single raw data csv file. '''
-    print('Input file:', input)
+    print('\nInput file:', input)
     df = manager.load_raw_data(input)
     df = df.T
     print('Number of data points in the file:', df.shape[0])
     df.plot(subplots=True, ylim=(0,3), yticks=(0,1,2,3), legend=False, color='steelblue')
+    plt.suptitle(input)
     plt.show()
-    plt.suptitle('Input file: '+input)
+    
 
 def plot_dataset(input):
     ''' Analyse and plot the input dataset txt file. '''
-    print('Input file:', input)
+    print('\nInput file:', input)
     df = manager.load_dataset(input)
     print('Input data shape:', df.shape)
     print('min is',np.min(df.iloc[:][1:].values))
@@ -34,7 +35,7 @@ def plot_dataset(input):
     plt.suptitle('0: Negative scent sample, 1: Positive scent sample')
     plt.show()
     plt.figure(2)
-    plt.suptitle('A few example time series from file: '+input)
+    plt.suptitle('Examples from: '+input)
     i = int(np.round(np.random.random_sample()*(df.shape[0]-1)/3))
     i = i * 3
     df.iloc[i][1:].plot(label='Sample '+str(i)+' class: '+str(df.iloc[i][0]))
