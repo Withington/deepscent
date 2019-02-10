@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import configparser
 
 from dataprocessing import class_info
 from dataprocessing import import_data
@@ -69,10 +70,20 @@ def main():
     plotting.plot_dataset(mini_set_dest+'/private_mini_TRAIN.txt')
     plotting.plot_dataset(mini_set_dest+'/private_mini_TEST.txt')
 
-
-    #todo lmtw make balanced 1 dog sample
-
-
+    # Make a mini, balanced dataset of single dog data.
+    config = configparser.ConfigParser()
+    config.optionxform=str
+    config_files = ['src/public_config.ini', 'src/private_config.ini']
+    config.read(config_files)
+    dog = config._sections['unique_dog_names']['dog2']
+    num_rows = 200
+    test_split=0.75 
+    mini_set_dest = 'data/private_data/private_mini_dog2'
+    label = 'private_mini_dog2'
+    split_data.mini_dataset(
+        dataset, meta, dog, num_rows, test_split, mini_set_dest, label)  
+    plotting.plot_dataset(mini_set_dest+'/'+label+'_TRAIN.txt')
+    plotting.plot_dataset(mini_set_dest+'/'+label+'_TEST.txt')
 
 
 if __name__ == "__main__":

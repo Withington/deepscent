@@ -138,10 +138,10 @@ def save_meta_from_np(target, array, verbose=False):
     ''' Save meta data numpy array to txt file '''
     file = Path(target)   
     assert(file.suffix=='.txt'), ['Meta file type must be .txt, not', file.suffix]
-    print(array.shape)
     assert(array.shape[1]==len(meta_header())), ['Array has',array.shape[1], 'columns but expected', len(meta_header()), 'columns']
     if verbose:
         print('Saving meta data from np array to:', file)
+        print('Meta data shape is', array.shape)
     np.savetxt(file, array, header=meta_header_as_str(), comments='', fmt='%s', delimiter=',')
 
 

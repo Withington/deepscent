@@ -410,3 +410,24 @@ def test_create_balanced_dataset():
     meta_bal = manager.meta_df_from_np(meta_bal_np)
     for i in range(0,df.shape[0]):
         compare_data_arrays(raw_data_path, df, meta_bal, i=i) 
+
+
+def test_mini_dataset():
+    ''' Test that the dog-specific, balanced dataset is created correctly '''
+    raw_data_path = Path('data/test_data/two_dogs/raw_data')
+    dataset = 'data/test_data/two_dogs/test_filtered_dataset.txt'
+    meta = 'data/test_data/two_dogs/test_filtered_dataset_meta.txt'
+    dest = 'data/test_data/two_dogs'
+    label = 'samson_only'
+    split_data.mini_dataset(dataset, meta, 'Samson', 8, 0.5, dest, label)
+    # Load and test
+    dataset = 'data/test_data/two_dogs/samson_only_TRAIN.txt'
+    meta = 'data/test_data/two_dogs/samson_only_TRAIN_meta.txt'
+    for i in range(0,4):
+        compare_data(raw_data_path, dataset, meta, i=i)
+    dataset = 'data/test_data/two_dogs/samson_only_TEST.txt'
+    meta = 'data/test_data/two_dogs/samson_only_TEST_meta.txt'
+    for i in range(0,4):
+        compare_data(raw_data_path, dataset, meta, i=i)
+
+

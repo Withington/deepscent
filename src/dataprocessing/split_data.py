@@ -90,6 +90,38 @@ def create_balanced_dataset_from_arrays(dataset, meta, num, class_balance, shuff
     return dataset_bal, meta_bal
 
 
+def mini_dataset(dataset_file, meta_file, dog, num_rows, test_split, dest, label, class_balance=0.5):
+    ''' Create mini, balanced, dataset, with meta data, for the given dog.
+    Save it in dest, using label to name the files '''
+
+    dataset = manager.load_dataset(dataset_file)
+    meta = manager.load_meta(meta_file)
+    assert(dataset.shape[0] == meta.shape[0])
+    dog_df, dog_meta_df = dataset_for_dog(dataset, meta, dog)
+
+    dataset_bal, meta_bal = create_balanced_dataset_from_arrays(
+        dog_df.to_numpy(), dog_meta_df.to_numpy(), num_rows, 
+        class_balance, shuffle=False)
+
+    split_arrays(dataset_bal, meta_bal, test_split, 
+        dest, label, stratify=dataset_bal[:,0])
+
+
+def dataset_for_dog(dataset, meta, dog):
+    ''' Return dataset and meta data for the given dog '''
+    assert(dataset.shape[0] == meta.shape[0])
+    n_meta = meta.shape[1]
+    df = pd.concat([meta, dataset], axis=1, join_axes=[meta.index])
+    assert(df.shape[0] == meta.shape[0])
+    df = df[df.dog == dog]
+    dog_meta_df = df.iloc[:,:n_meta]
+    dog_df = df.iloc[:,n_meta:]
+    return dog_df, dog_meta_df
+
+
+
+
+
 
 def main():
     parser = argparse.ArgumentParser(description='Split a dataset into training and test datasets')
