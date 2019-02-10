@@ -309,5 +309,5 @@ def test_remove_samples_duplicate_db_rows():
     meta_file = 'data/test_data/samson/'+label+'_meta.txt'
     print('Testing dataset', dataset_file, 'and', meta_file)
     compare_data(raw_data_path, dataset_file, meta_file) 
-    for i in range(0,16):
+    for i in range(0,15):
         compare_data(raw_data_path, dataset_file, meta_file, i=i) 

@@ -51,6 +51,13 @@ def flatten_dog_behaviour_database(input, target):
     if target:
         manager.save_dog_behaviour_flat_db(target, db_flat, verbose=True)
 
+class DroppedRowsInfo:
+    ''' Record which rows are dropped '''
+    def __init__(self):
+        self.single_match = []  # Rows where there was a single dataset row matching the NS row from the database 
+        self.two_match = []     # Rows dropped where there were two matching rows and the timestamp was used to figure out which to drop
+        self.multi_match = []   # Rows dropped where there were multiple matching rows so all had to be dropped
+        self.no_match = [] 
 
 def remove_samples(database, dataset, meta, dest, label):
     ''' Remove samples where the sample pot was not searched. This 
@@ -81,11 +88,10 @@ def remove_samples(database, dataset, meta, dest, label):
     meta_df = manager.load_meta(meta)
     dataset_shape_orig = dataset_df.shape
     meta_shape_orig = meta_df.shape
-    print(dataset_df.head())
-    print(meta_df.head())
     assert(meta_df.shape[1]==9)
     assert(meta_df.shape[0] == dataset_df.shape[0])
 
+    info = DroppedRowsInfo()
     for s in db_ns.itertuples():
         date = meta_df['date'] == s.Date
         dog = meta_df['dog'] == s.DogName
@@ -94,12 +100,11 @@ def remove_samples(database, dataset, meta, dest, label):
         sensor = meta_df['sensor_number'] == s.SensorNumber
         condition = date & dog & run & ps & sensor
         if meta_df[condition].empty:
-            print('Did not find a data row for:\n',s.Date, ',', s.DogName, ', Run:', s.Run, ', Pass:', s.Pass, ',Sensor:', s.SensorNumber, '\n')
+            info.no_match.append(s)
         else:
-            print('Found data row for:\n', s.Date, ',', s.DogName, ',', s.Run, ',', s.Pass, ',', s.SensorNumber) 
-            print('Found data is:\n', meta_df[condition].head(), '\n')
             assert(meta_df[condition].shape[0] <= 2)
             if meta_df[condition].shape[0] == 1 :
+                info.single_match.append(meta_df[condition])
                 drop_a_row(meta_df, dataset_df, condition)
             else:
                 # We found 2 rows in meta, try to find 2 rows in the db too
@@ -111,33 +116,37 @@ def remove_samples(database, dataset, meta, dest, label):
                 this_sensor = db_flat['SensorNumber'] == s.SensorNumber
                 this_condition = this_date & this_dog & this_run & this_pass & this_sensor
                 db_rows = db_flat[this_condition]
-                assert(db_rows.shape[0] == 2)
-                print('Found 2 rows in the dog behaviour database too:')
-                for r in db_rows.itertuples():
-                    print(r)
-                meta_time_0 = meta_rows.iloc[0]['time']
-                meta_time_1 = meta_rows.iloc[1]['time']
-                time_condition_0 = meta_df['time'] == meta_time_0
-                time_condition_1 = meta_df['time'] == meta_time_1
-                if (db_rows.iloc[0].y_pred == 2) & (db_rows.iloc[1].y_pred == 2):
-                    print('Drop both rows')
-                    condition_a = condition & time_condition_0
-                    condition_b = condition & time_condition_1
-                    drop_a_row(meta_df, dataset_df, condition_a)
-                    drop_a_row(meta_df, dataset_df, condition_b)
-                elif db_rows.iloc[0].y_pred == 2 :
-                    if meta_time_0 < meta_time_1 :
-                        condition_a = condition & time_condition_0
-                    else:
-                        condition_a = condition & time_condition_1
-                    drop_a_row(meta_df, dataset_df, condition_a)
+                if not db_rows.shape[0] == 2:
+                    for m in meta_df[condition].itertuples():
+                        info.multi_match.append(m)
+                        drop_this_row(meta_df, dataset_df, m)
                 else:
-                    assert(db_rows.iloc[1].y_pred == 2)
-                    if meta_time_0 < meta_time_1 :
+                    meta_time_0 = meta_rows.iloc[0]['time']
+                    meta_time_1 = meta_rows.iloc[1]['time']
+                    time_condition_0 = meta_df['time'] == meta_time_0
+                    time_condition_1 = meta_df['time'] == meta_time_1
+                    if (db_rows.iloc[0].y_pred == 2) & (db_rows.iloc[1].y_pred == 2):
+                        condition_a = condition & time_condition_0
                         condition_b = condition & time_condition_1
+                        info.two_match.append(meta_df[condition_a])
+                        info.two_match.append(meta_df[condition_b])
+                        drop_a_row(meta_df, dataset_df, condition_a)
+                        drop_a_row(meta_df, dataset_df, condition_b)
+                    elif db_rows.iloc[0].y_pred == 2 :
+                        if meta_time_0 < meta_time_1 :
+                            condition_a = condition & time_condition_0
+                        else:
+                            condition_a = condition & time_condition_1
+                        info.two_match.append(meta_df[condition_a])
+                        drop_a_row(meta_df, dataset_df, condition_a)
                     else:
-                        condition_b = condition & time_condition_0
-                    drop_a_row(meta_df, dataset_df, condition_b)
+                        assert(db_rows.iloc[1].y_pred == 2)
+                        if meta_time_0 < meta_time_1 :
+                            condition_b = condition & time_condition_1
+                        else:
+                            condition_b = condition & time_condition_0
+                        info.two_match.append(meta_df[condition_b])
+                        drop_a_row(meta_df, dataset_df, condition_b)
 
     assert(meta_df.shape[0]==dataset_df.shape[0])
     if dest:
@@ -145,6 +154,10 @@ def remove_samples(database, dataset, meta, dest, label):
         dest_meta = dest + '/' + label + '_meta.txt'
         manager.save_dataset(dest_dataset, dataset_df, verbose=True)
         manager.save_meta(dest_meta, meta_df, verbose=True)
+    print('Database samples marked as not searched but where no matching dataset row was found:\n', info.no_match)
+    print('Dropped rows where single matching dataset row was found:\n', info.single_match)
+    print('Dropped rows where there were two matching rows and the timestamp was used to figure out which row(s) to drop:\n', info.two_match)
+    print('Dropped rows where there were multiple matching rows and all had to be dropped:\n', info.multi_match)   
     print('Dataset shape changed from', dataset_shape_orig, 'to', dataset_df.shape)
     print('Meta data shape changed from', meta_shape_orig, 'to', meta_df.shape)
 
@@ -152,7 +165,11 @@ def remove_samples(database, dataset, meta, dest, label):
 def drop_a_row(meta_df, dataset_df, condition):
     assert(meta_df[condition].shape[0] == 1)
     i = meta_df.index.get_loc(meta_df[condition].iloc[-1].name)
-    print('Dropping row:\n', meta_df[condition])
+    meta_df.drop(meta_df.index[i], inplace=True)
+    dataset_df.drop(dataset_df.index[i], inplace=True)
+
+def drop_this_row(meta_df, dataset_df, meta_df_row):
+    i = meta_df.index.get_loc(meta_df_row.Index)
     meta_df.drop(meta_df.index[i], inplace=True)
     dataset_df.drop(dataset_df.index[i], inplace=True)
 

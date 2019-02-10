@@ -1,5 +1,4 @@
 filename,date,time,dog,run,pass,positive_position,sensor_number,class
-2017_05_01-11_00_Samson_3_2_T2.csv,2017-05-01,11:00:00,Samson,3,2,T2,0,0
 2017_05_01-11_00_Samson_3_2_T2.csv,2017-05-01,11:00:00,Samson,3,2,T2,1,1
 2017_05_01-11_00_Samson_3_2_T2.csv,2017-05-01,11:00:00,Samson,3,2,T2,2,0
 2017_05_01-11_00_Samson_1_1_T2.csv,2017-05-01,11:00:00,Samson,1,1,T2,0,0
