@@ -79,26 +79,20 @@ def remove_samples(database, dataset, meta, dest, label):
         Label for naming the output dataset and meta data files
     '''
 
+    # Dog behaviour database
     db_flat = manager.load_dog_behaviour_flat_db(database)
-    # Find any rows where y_pred is class 2, this is where the dog did not search the sample (e.g. dog behaviour was "NS")
-    db_ns = db_flat[db_flat['y_pred']==2]
+    db_ns = db_flat[db_flat['y_pred']==2] # Class 2 - where the dog did not search the sample (e.g. dog behaviour was "NS")
 
-    # Load pressure sensor data
+    # Pressure sensor data
     dataset_df = manager.load_dataset(dataset)
     meta_df = manager.load_meta(meta)
     dataset_shape_orig = dataset_df.shape
     meta_shape_orig = meta_df.shape
-    assert(meta_df.shape[1]==9)
     assert(meta_df.shape[0] == dataset_df.shape[0])
 
     info = DroppedRowsInfo()
     for s in db_ns.itertuples():
-        date = meta_df['date'] == s.Date
-        dog = meta_df['dog'] == s.DogName
-        run = meta_df['run'] == s.Run
-        ps = meta_df['pass'] == s.Pass
-        sensor = meta_df['sensor_number'] == s.SensorNumber
-        condition = date & dog & run & ps & sensor
+        condition = meta_condition(meta_df, s)
         if meta_df[condition].empty:
             info.no_match.append(s)
         else:
@@ -109,44 +103,12 @@ def remove_samples(database, dataset, meta, dest, label):
             else:
                 # We found 2 rows in meta, try to find 2 rows in the db too
                 meta_rows = meta_df[condition]
-                this_date = db_flat['Date'] == s.Date
-                this_dog= db_flat['DogName'] == s.DogName
-                this_run= db_flat['Run'] == s.Run
-                this_pass= db_flat['Pass'] == s.Pass
-                this_sensor = db_flat['SensorNumber'] == s.SensorNumber
-                this_condition = this_date & this_dog & this_run & this_pass & this_sensor
+                this_condition = db_condition(db_flat, s)
                 db_rows = db_flat[this_condition]
                 if not db_rows.shape[0] == 2:
-                    for m in meta_df[condition].itertuples():
-                        info.multi_match.append(m)
-                        drop_this_row(meta_df, dataset_df, m)
+                    drop_all_rows(meta_df, condition, info, dataset_df)
                 else:
-                    meta_time_0 = meta_rows.iloc[0]['time']
-                    meta_time_1 = meta_rows.iloc[1]['time']
-                    time_condition_0 = meta_df['time'] == meta_time_0
-                    time_condition_1 = meta_df['time'] == meta_time_1
-                    if (db_rows.iloc[0].y_pred == 2) & (db_rows.iloc[1].y_pred == 2):
-                        condition_a = condition & time_condition_0
-                        condition_b = condition & time_condition_1
-                        info.two_match.append(meta_df[condition_a])
-                        info.two_match.append(meta_df[condition_b])
-                        drop_a_row(meta_df, dataset_df, condition_a)
-                        drop_a_row(meta_df, dataset_df, condition_b)
-                    elif db_rows.iloc[0].y_pred == 2 :
-                        if meta_time_0 < meta_time_1 :
-                            condition_a = condition & time_condition_0
-                        else:
-                            condition_a = condition & time_condition_1
-                        info.two_match.append(meta_df[condition_a])
-                        drop_a_row(meta_df, dataset_df, condition_a)
-                    else:
-                        assert(db_rows.iloc[1].y_pred == 2)
-                        if meta_time_0 < meta_time_1 :
-                            condition_b = condition & time_condition_1
-                        else:
-                            condition_b = condition & time_condition_0
-                        info.two_match.append(meta_df[condition_b])
-                        drop_a_row(meta_df, dataset_df, condition_b)
+                    handle_two_rows(meta_rows, meta_df, db_rows, condition, info, dataset_df)
 
     assert(meta_df.shape[0]==dataset_df.shape[0])
     if dest:
@@ -154,13 +116,35 @@ def remove_samples(database, dataset, meta, dest, label):
         dest_meta = dest + '/' + label + '_meta.txt'
         manager.save_dataset(dest_dataset, dataset_df, verbose=True)
         manager.save_meta(dest_meta, meta_df, verbose=True)
-    print('Database samples marked as not searched but where no matching dataset row was found:\n', info.no_match)
-    print('Dropped rows where single matching dataset row was found:\n', info.single_match)
-    print('Dropped rows where there were two matching rows and the timestamp was used to figure out which row(s) to drop:\n', info.two_match)
-    print('Dropped rows where there were multiple matching rows and all had to be dropped:\n', info.multi_match)   
-    print('Dataset shape changed from', dataset_shape_orig, 'to', dataset_df.shape)
+    print('\nDatabase samples marked as not searched but where no matching dataset row was found:\n', info.no_match)
+    print('\nDropped rows where single matching dataset row was found:\n', info.single_match)
+    print('\nDropped rows where there were two matching rows and the timestamp was used to figure out which row(s) to drop:\n', info.two_match)
+    print('\nDropped rows where there were multiple matching rows and all had to be dropped:\n', info.multi_match)   
+    print('\nDataset shape changed from', dataset_shape_orig, 'to', dataset_df.shape)
     print('Meta data shape changed from', meta_shape_orig, 'to', meta_df.shape)
 
+
+def db_condition(db_flat, db_row):
+    ''' Assemble a condition that can be used to find rows in 
+    the flat database that match the input database row '''
+    date = db_flat['Date'] == db_row.Date
+    dog = db_flat['DogName'] == db_row.DogName
+    run = db_flat['Run'] == db_row.Run
+    ps = db_flat['Pass'] == db_row.Pass
+    sensor = db_flat['SensorNumber'] == db_row.SensorNumber
+    condition = date & dog & run & ps & sensor
+    return condition
+
+def meta_condition(meta_df, db_row):
+    ''' Assemble a condition that can be used to find rows in a 
+    the meta data that match the database row '''
+    date = meta_df['date'] == db_row.Date
+    dog = meta_df['dog'] == db_row.DogName
+    run = meta_df['run'] == db_row.Run
+    ps = meta_df['pass'] == db_row.Pass
+    sensor = meta_df['sensor_number'] == db_row.SensorNumber
+    condition = date & dog & run & ps & sensor
+    return condition
 
 def drop_a_row(meta_df, dataset_df, condition):
     assert(meta_df[condition].shape[0] == 1)
@@ -172,6 +156,49 @@ def drop_this_row(meta_df, dataset_df, meta_df_row):
     i = meta_df.index.get_loc(meta_df_row.Index)
     meta_df.drop(meta_df.index[i], inplace=True)
     dataset_df.drop(dataset_df.index[i], inplace=True)
+
+
+def drop_all_rows(meta_df, condition, info, dataset_df):
+    ''' Where 2 rows in meta match the condition, but there 
+    are not 2 corresponding rows in the database, we can't 
+    ascertain which meta row to delete so we must delete them all.
+    '''
+    for m in meta_df[condition].itertuples():
+        info.multi_match.append(m)
+        drop_this_row(meta_df, dataset_df, m)
+
+
+def handle_two_rows(meta_rows, meta_df, db_rows, condition, info, dataset_df):
+    ''' Handle the situation where the condition matches 2 rows in meta and also
+    matches 2 rows in the database. Use the timestamp in meta to work out 
+    which row in meta matches which row in the database. 
+    '''
+    meta_time_0 = meta_rows.iloc[0]['time']
+    meta_time_1 = meta_rows.iloc[1]['time']
+    time_condition_0 = meta_df['time'] == meta_time_0
+    time_condition_1 = meta_df['time'] == meta_time_1
+    if (db_rows.iloc[0].y_pred == 2) & (db_rows.iloc[1].y_pred == 2):
+        condition_a = condition & time_condition_0
+        condition_b = condition & time_condition_1
+        info.two_match.append(meta_df[condition_a])
+        info.two_match.append(meta_df[condition_b])
+        drop_a_row(meta_df, dataset_df, condition_a)
+        drop_a_row(meta_df, dataset_df, condition_b)
+    elif db_rows.iloc[0].y_pred == 2 :
+        if meta_time_0 < meta_time_1 :
+            condition_a = condition & time_condition_0
+        else:
+            condition_a = condition & time_condition_1
+        info.two_match.append(meta_df[condition_a])
+        drop_a_row(meta_df, dataset_df, condition_a)
+    else:
+        assert(db_rows.iloc[1].y_pred == 2)
+        if meta_time_0 < meta_time_1 :
+            condition_b = condition & time_condition_1
+        else:
+            condition_b = condition & time_condition_0
+        info.two_match.append(meta_df[condition_b])
+        drop_a_row(meta_df, dataset_df, condition_b)
 
 
 def main():
