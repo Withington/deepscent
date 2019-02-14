@@ -7,14 +7,14 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import sklearn.utils
 
-from hamcrest import assert_that, equal_to, is_
+from hamcrest import assert_that, equal_to, is_, close_to
 
 from dataprocessing import class_info
 from dataprocessing import import_data
 from dataprocessing import filter_data
 from dataprocessing import split_data
 from dataprocessing import manager
-
+from dataprocessing import event_detection
 
 def test_position():
     file_name = '2017_11_06-11_42-Rex_1_1_T1.csv'
@@ -429,5 +429,21 @@ def test_mini_dataset():
     meta = 'data/test_data/two_dogs/samson_only_TEST_meta.txt'
     for i in range(0,4):
         compare_data(raw_data_path, dataset, meta, i=i)
+
+
+
+def test_window():
+    ''' Find the event window in a data sample '''
+    dataset_file = 'data/test_data/datasets/random_dataset.txt'
+    dataset = manager.load_dataset(dataset_file)
+    detection_window = 50
+    window = 200
+    threshold = 0.1
+    window_dataset = event_detection.create_window_dataset( \
+        dataset, detection_window, window, threshold)
+    expected = manager.load_dataset('data/test_data/datasets/random_window_dataset.txt')
+    assert_that(window_dataset.to_numpy().all(), \
+        equal_to(expected.to_numpy().all()))
+
 
 
