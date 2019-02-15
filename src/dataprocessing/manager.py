@@ -71,7 +71,7 @@ def save_dog_behaviour_flat_db(target, df, verbose=False):
 
 def load_dataset(file):
     ''' Load dataset from txt file and return pandas dataframe '''
-    df = pd.read_csv(Path(file), sep=' ', header=None)
+    df = pd.DataFrame(load_dataset_as_np(file))
     return df
 
 def load_dataset_as_np(file):
@@ -81,18 +81,14 @@ def load_dataset_as_np(file):
 
 def save_dataset(target, df, verbose=False):
     ''' Save dataset dataframe to txt file '''
-    file = Path(target)
-    assert(file.suffix=='.txt'), ['Dataset file type must be .txt, not', file.suffix]
-    if verbose: print('Saving dataset to:', file)
-    df.to_csv(file, sep=' ', header=False, index=False)
-    if verbose: print('Save completed') 
+    save_dataset_from_np(target, df.to_numpy(), verbose) 
 
 
 def save_dataset_from_np(target, array, verbose=False):
     ''' Save dataset numpy array to txt file '''
     file = Path(target)   
     assert(file.suffix=='.txt'), ['Dataset file type must be .txt, not', file.suffix]
-    if verbose: print('Saving dataset from np array to:', file)
+    if verbose: print('Dataset shape:', array.shape, 'Saving dataset from np array to:', file)
     np.savetxt(target, array, fmt='%f', delimiter=' ')
     if verbose: print('Save completed')
 
@@ -128,7 +124,9 @@ def save_meta(target, df, verbose=False):
     assert(file.suffix=='.txt'), ['Meta file type must be .txt, not', file.suffix]
     assert(list(df)==meta_header())
     df.to_csv(file, index=False)
-    if verbose: print('Save meta data to:', file)
+    if verbose:
+        print('Saving meta data to:', file)
+        print('Meta data shape is', df.shape)
 
 
 def save_meta_from_np(target, array, verbose=False):
