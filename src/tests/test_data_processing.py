@@ -132,7 +132,7 @@ def test_import_data_save():
     raw_filename = meta.iloc[i]['filename']
     raw_loaded = manager.load_raw_data_as_np('data/test_data/raw_data/'+raw_filename)
     cols = raw_loaded.shape[1]
-    assert_that(loaded[i][1:cols+1].all(), equal_to(raw_loaded[1][:cols].all())) 
+    assert(np.array_equal(loaded[i][1:cols+1], raw_loaded[1]))
 
 
 def compare_data(raw_data_path, dataset_file, meta_file, i=None):
@@ -157,6 +157,9 @@ def compare_data(raw_data_path, dataset_file, meta_file, i=None):
 def compare_data_arrays(raw_data_path, dataset, meta, i=None):
     ''' Compare a row from the dataset against the corresponding raw data file.
         
+    The dataset may be truncated or padded compared to the raw data so
+    overrunning columns are ignored.
+
     Parameters
     ----------
     raw_data_path: str
@@ -172,7 +175,7 @@ def compare_data_arrays(raw_data_path, dataset, meta, i=None):
     # Select a row in the dataset
     assert(dataset.shape[0] == meta.shape[0])
     rows = meta.shape[0]
-    if i:
+    if i != None:
         assert(i<rows)
     else:
         i = np.random.randint(0,rows)
@@ -186,9 +189,11 @@ def compare_data_arrays(raw_data_path, dataset, meta, i=None):
         count = count+1
         assert_that(count, equal_to(1))
         raw_loaded = manager.load_raw_data_as_np(f)
-        cols = raw_loaded.shape[1]
-        assert_that(dataset[i][1:cols+1].all(), 
-            equal_to(raw_loaded[sensor_num][:cols].all())) 
+        compare_cols = min(raw_loaded.shape[1], dataset.shape[1]-1)
+        print('Comparing the first', compare_cols, 'columns')
+        assert(compare_cols>10)
+        assert(np.array_equal(dataset[i][1:compare_cols+1], raw_loaded[sensor_num][:compare_cols]))
+
 
 
 def test_dataset():
@@ -238,6 +243,9 @@ def test_split_data():
     split_data.split(dataset_file, meta_file, 0.2, dest=dest, label=label)
     expected = Path(dest+'/'+label+'_TRAIN.txt')
     assert_that(expected.exists(), is_(True))
+    # Compare to raw data
+    raw_data_path = Path('data/test_data/raw_data')
+    compare_data(raw_data_path, dest+'/'+label+'_TRAIN.txt', dest+'/'+label+'_TRAIN_meta.txt', i=0)
 
 
 def test_split_data_reload():
@@ -331,26 +339,43 @@ def test_remove_samples_duplicate_db_rows():
     ''' Test removing NS samples where the dog behaviour database contains 
     more than one row with the same date, dog, run, pass and sensor number '''
     db_flat_file = 'data/test_data/samson/duplicate_test_dog_behaviour_database_flat.csv'
-    dataset_file = 'data/test_data/samson/duplicate_test_dataset.txt'
     meta_file = 'data/test_data/samson/duplicate_test_dataset_meta.txt'
     dest = 'data/test_data/samson'
     label = 'duplicate_test_filtered_dataset'
-    # Load files and shuffle, for thorough test
+    
+
     db_flat = manager.load_dog_behaviour_flat_db(db_flat_file)
-    dataset_np = manager.load_dataset_as_np(dataset_file)
     meta_np = manager.load_meta_as_np(meta_file)
+
+    # Create a dummy dataset and a log relating the data to the meta file
+    log = meta_np
+    n = meta_np.shape[0]
+    dataset_np = np.array
+    dataset_np = np.ones((n,20))
+    for j in range(n):
+        dataset_np[j] = dataset_np[j] * j
+        log[j][1] = j
+
+    # Shuffle, for thorough test
     sklearn.utils.shuffle(dataset_np, meta_np)
+
+    # Do the filtering
     dataset_df = pd.DataFrame(dataset_np)
     meta_df = manager.meta_df_from_np(meta_np)
     filter_data.remove_samples_from_df(db_flat, dataset_df, meta_df, dest, label)
-    # Test against raw data files    
-    raw_data_path = Path('data/test_data/samson/raw_data')
+    # Test 
     dataset_file = 'data/test_data/samson/'+label+'.txt'
     meta_file = 'data/test_data/samson/'+label+'_meta.txt'
     print('Testing dataset', dataset_file, 'and', meta_file)
-    compare_data(raw_data_path, dataset_file, meta_file) 
-    for i in range(0,15):
-        compare_data(raw_data_path, dataset_file, meta_file, i=i) 
+
+    dataset = manager.load_dataset_as_np(dataset_file)   
+    meta_np = manager.load_meta_as_np(meta_file)
+
+    for j in range(meta_np.shape[0]):
+        filename = meta_np[j][0]
+        d_num = int(dataset[j][0])
+        filename_in_log = log[d_num][0]
+        assert_that(filename, equal_to(filename_in_log))
 
 
 def test_create_balanced_dataset_from_arrays():
@@ -396,18 +421,18 @@ def test_create_balanced_dataset_from_arrays():
 def test_create_balanced_dataset():
     ''' Using samson data, test that the balanced dataset is created correctly '''
     raw_data_path = Path('data/test_data/samson/raw_data')
-    dataset = 'data/test_data/samson/duplicate_test_filtered_dataset.txt'
-    meta = 'data/test_data/samson/duplicate_test_filtered_dataset_meta.txt'
+    dataset = 'data/test_data/samson/test_filtered_dataset.txt'
+    meta = 'data/test_data/samson/test_filtered_dataset_meta.txt'
     num = 8
     class_balance = 0.25
-    dataset_bal_np, meta_bal_np = split_data.create_balanced_dataset(
+    dataset = manager.load_dataset(dataset)
+    meta = manager.load_meta(meta) 
+    df, meta_bal = split_data.create_balanced_dataset(
         dataset, meta, num, class_balance)
 
     # Check output
-    df = pd.DataFrame(dataset_bal_np)
     assert_that(df[df[0]==0].count()[0], equal_to(num*class_balance))
     assert_that(df[df[0]==1].count()[0], equal_to(num*(1-class_balance)))
-    meta_bal = manager.meta_df_from_np(meta_bal_np)
     for i in range(0,df.shape[0]):
         compare_data_arrays(raw_data_path, df, meta_bal, i=i) 
 
@@ -420,7 +445,7 @@ def test_mini_dataset():
     dest = 'data/test_data/two_dogs'
     label = 'samson_only'
     split_data.mini_dataset(dataset, meta, 8, 0.5, 0.5, \
-        dog='Samson', event_detection=False, dest=dest, label=label)
+        dog='Samson', events_only=False, dest=dest, label=label)
     # Load and test
     dataset = 'data/test_data/two_dogs/samson_only_TRAIN.txt'
     meta = 'data/test_data/two_dogs/samson_only_TRAIN_meta.txt'
@@ -431,6 +456,27 @@ def test_mini_dataset():
     for i in range(0,4):
         compare_data(raw_data_path, dataset, meta, i=i)
 
+
+def test_mini_dataset_window():
+    ''' Create a dog-specific, balanced, windowed, dataset '''
+    raw_data_path = Path('data/test_data/two_dogs/raw_data')
+    dataset = 'data/test_data/two_dogs/test_filtered_dataset.txt'
+    meta = 'data/test_data/two_dogs/test_filtered_dataset_meta.txt'
+    dest = 'data/test_data/two_dogs'
+    label = 'samson_events'
+    split_data.mini_dataset(dataset, meta, 8, 0.5, 0.5, \
+        dog='Samson', events_only=True, \
+        event_detection_window=10, event_window=50, event_threshold=0.1, \
+        dest=dest, label=label)
+    # Load and test
+    dataset = 'data/test_data/two_dogs/samson_events_TRAIN.txt'
+    meta = 'data/test_data/two_dogs/samson_events_TRAIN_meta.txt'
+    for i in range(0,4):
+        compare_data(raw_data_path, dataset, meta, i=i)
+    dataset = 'data/test_data/two_dogs/samson_events_TEST.txt'
+    meta = 'data/test_data/two_dogs/samson_events_TEST_meta.txt'
+    for i in range(0,4):
+        compare_data(raw_data_path, dataset, meta, i=i)
 
 
 def test_window():
@@ -443,8 +489,9 @@ def test_window():
     window_dataset = event_detection.create_window_dataset( \
         dataset, detection_window, window, threshold)
     expected = manager.load_dataset('data/test_data/datasets/random_window_dataset.txt')
-    assert_that(window_dataset.to_numpy().all(), \
-        equal_to(expected.to_numpy().all()))
+    assert(np.array_equal(window_dataset.to_numpy(), expected.to_numpy()))
+
+        
 
 
 

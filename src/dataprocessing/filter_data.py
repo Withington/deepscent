@@ -123,7 +123,7 @@ def remove_samples_from_df(db_flat, dataset_df, meta_df, dest, label, verbose=Tr
                 info.single_match.append(meta_df[condition])
                 drop_a_row(meta_df, dataset_df, condition)
             else:
-                # We found 2 rows in meta, try to find 2 rows in the db too
+                #We found 2 rows in meta, try to find 2 rows in the db too
                 meta_rows = meta_df[condition]
                 this_condition = db_condition(db_flat, s)
                 db_rows = db_flat[this_condition]
@@ -175,7 +175,6 @@ def drop_a_row(meta_df, dataset_df, condition):
     i = meta_df.index.get_loc(label)
     meta_df.drop(meta_df.index[i], inplace=True)
     dataset_df.drop(dataset_df.index[i], inplace=True)
-    assert(meta_df[condition].empty)
 
 def drop_this_row(meta_df, dataset_df, meta_df_row):
     i = meta_df.index.get_loc(meta_df_row.Index)
@@ -191,7 +190,6 @@ def drop_all_rows(meta_df, condition, info, dataset_df):
     for m in meta_df[condition].itertuples():
         info.multi_match.append(m)
         drop_this_row(meta_df, dataset_df, m)
-    assert(meta_df[condition].empty)
 
 
 def handle_two_rows(meta_rows, meta_df, db_rows, condition, info, dataset_df):

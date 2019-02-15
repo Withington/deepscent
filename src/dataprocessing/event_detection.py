@@ -49,9 +49,7 @@ def detect_window():
         plt.xlim(breakpoints[0], breakpoints[1])
         plt.suptitle('Zoom in on sample '+str(i))
         plt.show()
-
-
-
+    
 
 def create_window_dataset(dataset, detection_window, window, threshold=None):
     ''' Find the event window in each sample in the dataset. 

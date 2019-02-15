@@ -10,6 +10,7 @@ from sklearn.model_selection import train_test_split
 import sklearn.utils
 
 from dataprocessing import manager
+from dataprocessing import event_detection
 
 def split(dataset_file, meta_file, test_split, dest='', label='', shuffle=True, stratify=None):
     ''' Split the dataset and corresponding meta into train and test sets.
@@ -41,14 +42,14 @@ def split_arrays(dataset, meta, test_split, dest='', label='', shuffle=True, str
         manager.save_meta_from_np(dest+'/'+meta_test_name, meta_test, verbose=True)
 
 
-def create_balanced_dataset(dataset_file, meta_file, num, class_balance, shuffle=True):
+def create_balanced_dataset(dataset, meta, num, class_balance, shuffle=True):
     ''' Create a dataset of the given number of rows and with the given
     class balance between the two classes. Return the balanced dataset 
     and corresponding meta DataFrames. '''
-    dataset = manager.load_dataset_as_np(dataset_file)
-    meta = manager.load_meta_as_np(meta_file)
     dataset_bal, meta_bal = create_balanced_dataset_from_arrays(
-        dataset, meta, num, class_balance, shuffle)
+        dataset.to_numpy(), meta.to_numpy(), num, class_balance, shuffle)
+    dataset_bal = pd.DataFrame(dataset_bal)
+    meta_bal = manager.meta_df_from_np(meta_bal)    
     return dataset_bal, meta_bal
 
 def create_balanced_dataset_from_arrays(dataset, meta, num, class_balance, shuffle=True):
@@ -92,7 +93,8 @@ def create_balanced_dataset_from_arrays(dataset, meta, num, class_balance, shuff
 
 def mini_dataset(dataset_file, meta_file, \
         num_samples, test_split, class_balance=0.5, \
-        dog=None, event_detection=True, \
+        dog=None, events_only=False,
+        event_detection_window=50, event_window=1000, event_threshold=0.1, \
         dest=None, label=None):
     ''' Create mini, balanced, dataset, with meta data, for the given dog.
     Save it in dest, using label to name the files '''
@@ -100,14 +102,24 @@ def mini_dataset(dataset_file, meta_file, \
     dataset = manager.load_dataset(dataset_file)
     meta = manager.load_meta(meta_file)
     assert(dataset.shape[0] == meta.shape[0])
-    dog_df, dog_meta_df = dataset_for_dog(dataset, meta, dog)
 
-    dataset_bal, meta_bal = create_balanced_dataset_from_arrays(
-        dog_df.to_numpy(), dog_meta_df.to_numpy(), num_samples, 
+    # Use data for only one dog
+    if dog:
+        dataset, meta = dataset_for_dog(dataset, meta, dog)
+
+    # Create a smaller, balanced dataset
+    dataset, meta = create_balanced_dataset(
+        dataset, meta, num_samples, 
         class_balance, shuffle=False)
 
-    split_arrays(dataset_bal, meta_bal, test_split, 
-        dest, label, stratify=dataset_bal[:,0])
+    # Reduce samples to the event window
+    if events_only:
+        dataset = event_detection.create_window_dataset( \
+            dataset, event_detection_window, event_window, event_threshold)
+
+    # Split in to training and test sets, maintaining the balanace
+    split_arrays(dataset, meta, test_split, 
+        dest, label, stratify=dataset[0])
 
 
 def dataset_for_dog(dataset, meta, dog):
