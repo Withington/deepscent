@@ -116,7 +116,7 @@ def remove_samples_from_df(db_flat, dataset_df, meta_df, dest, label, verbose=Tr
     for s in db_ns.itertuples():
         condition = meta_condition(meta_df, s)
         if meta_df[condition].empty:
-            info.no_match.append(s)
+            info.no_match.append([s.Date, s.DogName, s.Run, s.Pass, s.SensorNumber])
         else:
             assert(meta_df[condition].shape[0] <= 2)
             if meta_df[condition].shape[0] == 1 :
@@ -133,20 +133,18 @@ def remove_samples_from_df(db_flat, dataset_df, meta_df, dest, label, verbose=Tr
                     handle_two_rows(meta_rows, meta_df, db_rows, condition, info, dataset_df)
 
     assert(meta_df.shape[0]==dataset_df.shape[0])
+    if verbose:
+        print('\nDatabase samples marked as not searched but where no matching dataset row was found:\n', info.no_match)
+        print('\nDropped rows where single matching dataset row was found:\n', info.single_match)
+        print('\nDropped rows where there were two matching rows and the timestamp was used to figure out which row(s) to drop:\n', info.two_match)
+        print('\nDropped rows where there were multiple matching rows and all had to be dropped:\n', info.multi_match)      
+        print('\nDataset shape changed from', dataset_shape_orig, 'to', dataset_df.shape)
+        print('Meta data shape changed from', meta_shape_orig, 'to', meta_df.shape)
     if dest:
         dest_dataset = dest + '/' + label + '.txt'
         dest_meta = dest + '/' + label + '_meta.txt'
         manager.save_dataset(dest_dataset, dataset_df, verbose=verbose)
         manager.save_meta(dest_meta, meta_df, verbose=verbose)
-    if verbose:
-        print('\nDatabase samples marked as not searched but where no matching dataset row was found:\n', info.no_match)
-        print('\nDropped rows where single matching dataset row was found:\n', info.single_match)
-        print('\nDropped rows where there were two matching rows and the timestamp was used to figure out which row(s) to drop:\n', info.two_match)
-        print('\nDropped rows where there were multiple matching rows and all had to be dropped:\n', info.multi_match)   
-        print('\nDropped rows where there were multiple matching rows and all had to be dropped:\n', info.multi_match)   
-        print('\nDropped rows where there were multiple matching rows and all had to be dropped:\n', info.multi_match)   
-        print('\nDataset shape changed from', dataset_shape_orig, 'to', dataset_df.shape)
-        print('Meta data shape changed from', meta_shape_orig, 'to', meta_df.shape)
 
 
 def db_condition(db_flat, db_row):

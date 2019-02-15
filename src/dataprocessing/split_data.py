@@ -90,7 +90,10 @@ def create_balanced_dataset_from_arrays(dataset, meta, num, class_balance, shuff
     return dataset_bal, meta_bal
 
 
-def mini_dataset(dataset_file, meta_file, dog, num_rows, test_split, dest, label, class_balance=0.5):
+def mini_dataset(dataset_file, meta_file, \
+        num_samples, test_split, class_balance=0.5, \
+        dog=None, event_detection=True, \
+        dest=None, label=None):
     ''' Create mini, balanced, dataset, with meta data, for the given dog.
     Save it in dest, using label to name the files '''
 
@@ -100,7 +103,7 @@ def mini_dataset(dataset_file, meta_file, dog, num_rows, test_split, dest, label
     dog_df, dog_meta_df = dataset_for_dog(dataset, meta, dog)
 
     dataset_bal, meta_bal = create_balanced_dataset_from_arrays(
-        dog_df.to_numpy(), dog_meta_df.to_numpy(), num_rows, 
+        dog_df.to_numpy(), dog_meta_df.to_numpy(), num_samples, 
         class_balance, shuffle=False)
 
     split_arrays(dataset_bal, meta_bal, test_split, 

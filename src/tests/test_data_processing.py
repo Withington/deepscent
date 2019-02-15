@@ -110,10 +110,10 @@ def test_import_data_save():
     input = 'data/test_data/class_info/good.pkl'
     target = Path('data/test_data/datasets/test_output_dataset.txt')
     target_meta = Path('data/test_data/datasets/test_output_dataset_meta.txt') 
-    cols = 6000
+    datapoints = 6000
     expected_good = 8
-    dataset_shape = import_data.create_dataset(input, target, cols)
-    assert_that(dataset_shape, equal_to((expected_good*3,cols+1)))
+    dataset_shape = import_data.create_dataset(input, target, datapoints)
+    assert_that(dataset_shape, equal_to((expected_good*3,datapoints+1)))
     # Test meta data
     meta = manager.load_meta(target_meta)
     i = 10
@@ -298,9 +298,9 @@ def create_samson_dataset():
     ''' Create a dataset for samson the dog from the raw pressure sensor data csv files. '''
     source = 'data/test_data/samson/raw_data'
     dest = 'data/test_data/samson'
-    max_cols = 100
+    num_datapoints = 100
     class_info.parse_filenames(source, dest)
-    import_data.create_dataset(dest+'/good.pkl', dest+'/samson_dataset.txt', max_cols=max_cols, verbose=True)
+    import_data.create_dataset(dest+'/good.pkl', dest+'/samson_dataset.txt', num_datapoints=num_datapoints, verbose=True)
 
 
 def test_remove_samples():
@@ -419,7 +419,8 @@ def test_mini_dataset():
     meta = 'data/test_data/two_dogs/test_filtered_dataset_meta.txt'
     dest = 'data/test_data/two_dogs'
     label = 'samson_only'
-    split_data.mini_dataset(dataset, meta, 'Samson', 8, 0.5, dest, label)
+    split_data.mini_dataset(dataset, meta, 8, 0.5, 0.5, \
+        dog='Samson', event_detection=False, dest=dest, label=label)
     # Load and test
     dataset = 'data/test_data/two_dogs/samson_only_TRAIN.txt'
     meta = 'data/test_data/two_dogs/samson_only_TRAIN_meta.txt'

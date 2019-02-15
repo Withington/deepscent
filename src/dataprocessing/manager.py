@@ -64,10 +64,8 @@ def save_dog_behaviour_flat_db(target, df, verbose=False):
     file = Path(target)
     assert(list(df)==dog_behaviour_flat_db_header()) , ['Unexpected header in flattened dog behaviour database']
     assert(file.suffix=='.csv'), ['Dog behaviour database file type must be .csv, not', file.suffix]
-    if verbose:
-        print('Saving flat dog behaviour database to:', file)
     df.to_csv(file, index=False)
-
+    if verbose: print('Saved flat dog behaviour database to:', file)
 
 # Dataset ------------------------------------------------------------------------------------------
 
@@ -85,18 +83,18 @@ def save_dataset(target, df, verbose=False):
     ''' Save dataset dataframe to txt file '''
     file = Path(target)
     assert(file.suffix=='.txt'), ['Dataset file type must be .txt, not', file.suffix]
-    if verbose:
-        print('Saving dataset to:', file)
+    if verbose: print('Saving dataset to:', file)
     df.to_csv(file, sep=' ', header=False, index=False)
+    if verbose: print('Save completed') 
 
 
 def save_dataset_from_np(target, array, verbose=False):
     ''' Save dataset numpy array to txt file '''
     file = Path(target)   
     assert(file.suffix=='.txt'), ['Dataset file type must be .txt, not', file.suffix]
-    if verbose:
-        print('Saving dataset from np array to:', file)
+    if verbose: print('Saving dataset from np array to:', file)
     np.savetxt(target, array, fmt='%f', delimiter=' ')
+    if verbose: print('Save completed')
 
 
 # Meta data ------------------------------------------------------------------------------------------
@@ -129,9 +127,8 @@ def save_meta(target, df, verbose=False):
     file = Path(target)
     assert(file.suffix=='.txt'), ['Meta file type must be .txt, not', file.suffix]
     assert(list(df)==meta_header())
-    if verbose:
-        print('Saving meta data to:', file)
     df.to_csv(file, index=False)
+    if verbose: print('Save meta data to:', file)
 
 
 def save_meta_from_np(target, array, verbose=False):

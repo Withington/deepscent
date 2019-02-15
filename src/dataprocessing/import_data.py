@@ -10,14 +10,16 @@ import pandas as pd
 
 from dataprocessing import manager
 
-def data_size(input):
+def data_size(raw_data_files, verbose=False):
     ''' Input a pkl file listing all of the good raw data files. 
     For each file, count the number of pressure sensor data points. 
     Print summary statistics and return the max number of data 
-    points in any file. '''
-    good = pd.read_pickle(Path(input))
+    points in any file. 
+    Return the maximum number of columns in any file'''
+    good = pd.read_pickle(Path(raw_data_files))
     n = good.shape[0]
-    print('number of input files:', n)
+    if verbose:
+        print('Number of input files:', n)
     max = 0
     max_file = ''
     size_info = []
@@ -29,49 +31,49 @@ def data_size(input):
         if num_data_points > max:
             max = num_data_points
             max_file = file
-        if num_data_points >= 30000:
+        if verbose and num_data_points >= 30000:
             print(num_data_points, 'data points in file', file)
 
-    print('max size is', max)
-    print('in file', max_file)
-    df = pd.DataFrame(size_info, columns=['file', 'num_samples', 'num_data_points'])
-    print('Summary statistics for the number of pressure sensor data points in all of the good files:')
-    print(df.num_data_points.describe(percentiles=[0.05,0.25,0.5,0.75,0.95]))
-    print('Summary statistics for the number of sample rows in all of the good files:')
-    print(df.num_samples.describe())  
-    print('Example data:')
-    print(df.head())
+    if verbose:
+        print('max size is', max, 'in file', max_file)
+        df = pd.DataFrame(size_info, columns=['file', 'num_samples', 'num_data_points'])
+        print('Summary statistics for the number of pressure sensor data points in all of the good files:')
+        print(df.num_data_points.describe(percentiles=[0.05,0.25,0.5,0.75,0.95]))
+        print('Summary statistics for the number of sample rows in all of the good files:')
+        print(df.num_samples.describe())  
+        print('Example data:')
+        print(df.head())
     return max
 
 
-def create_dataset(input, target='', max_cols=12000, verbose=False):
-    ''' Read in the list of good files, input in a pkl file. 
-    For each file, get the three pressure sensor data samples, 
-    add class information (e.g. +ve or -ve scent sample) 
-    to the first column(s). Save the entire dataset in
-    the target file. 
+def create_dataset(raw_data_files, target='', num_datapoints=None, verbose=False):
+    ''' Given a list of raw data files, create a dataset of raw data
+    where each sample has the specified number of datapoints. The first
+    column of the dataset is the class of each sample.
+    Save the entire dataset in the target file. 
     Return the shape of the dataset. '''
 
-    print('Loading', input)
-    good = pd.read_pickle(Path(input))
+    print('Loading', raw_data_files)
+    good = pd.read_pickle(Path(raw_data_files))
 
-    if verbose:
-        data_size(input)
+    max_cols = data_size(raw_data_files, verbose)
+    if not num_datapoints:
+        num_datapoints = max_cols
 
     n = good.shape[0]
     class_cols = 1 # How many columns will be added to hold class data.
 
-    data = np.empty((n*3,max_cols+class_cols))
+    data = np.empty((n*3,num_datapoints+class_cols))
     meta = list()
     for i in range(n):
         file = good.at[i,'file']
         d_i = manager.load_raw_data_as_np(file)
         # Set the number of columns by truncating or padding with zeros.
         cols = d_i.shape[1]
-        if cols > max_cols:
-            d_i = d_i[:,:max_cols]
-        elif cols < max_cols:
-            d_i = np.pad(d_i,((0,0),(0,max_cols-cols)),mode='constant',constant_values=0)
+        if cols > num_datapoints:
+            d_i = d_i[:,:num_datapoints]
+        elif cols < num_datapoints:
+            d_i = np.pad(d_i,((0,0),(0,num_datapoints-cols)),mode='constant',constant_values=0)
         # Pop class data into the first column.
         position = good.at[i,'position']
         classes_i = class_vector(position)
@@ -106,7 +108,7 @@ def create_dataset(input, target='', max_cols=12000, verbose=False):
         manager.save_dataset_from_np(output_file, data, verbose=True)
         manager.save_meta_from_np(output_file_meta, np.array(meta), verbose=True)
 
-    print('Number of time series data points used:', max_cols)
+    print('Number of time series data points used:', num_datapoints)
     print('Dataset shape:', data.shape) 
     return data.shape
 
@@ -124,10 +126,10 @@ def main():
     parser = argparse.ArgumentParser(description='Read the raw data files and create a single dataset')
     parser.add_argument('input', help='input file - a pkl file listing all of the files')
     parser.add_argument('--target', help='target txt file for saving the dataset', default='')
-    parser.add_argument('--max_cols', type=int, help='maximum number of timeseries datapoints to use', default=12000)   
+    parser.add_argument('--num_datapoints', type=int, help='maximum number of timeseries datapoints to use', default=None)   
     parser.add_argument('--verbose', type=bool, help='print information about the files', default=False)   
     args = parser.parse_args()
-    create_dataset(args.input, args.target, args.max_cols, args.verbose)
+    create_dataset(args.input, args.target, args.num_datapoints, args.verbose)
 
 if __name__ == "__main__":
     main()
