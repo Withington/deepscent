@@ -12,16 +12,16 @@ from dataprocessing import split_data
 from dataprocessing import plotting
 
 
-def main():
+
+
+
+def create_dataset():
     parser = argparse.ArgumentParser(description='Filter the raw data files and create a single dataset')
     parser.add_argument('source', help='source directory containing the raw csv files')
     parser.add_argument('--dest', help='destination file path to save the dataset and intermediate files', default='')
     parser.add_argument('--verbose', type=bool, help='print information about the files', default=False)   
     args = parser.parse_args()
-    create_dataset(args)
 
-
-def create_dataset(args):
     label = 'private_data_all'
     output_dest = args.dest+'/'+label 
     # Get meta data from file names. Discard some files based on their name.
@@ -51,49 +51,61 @@ def create_dataset(args):
     plotting.plot_dataset(output_dest+'/private_data_all_TEST.txt')
 
 
-def create_dev_datasets(args):
+def create_dev_datasets():
+    parser = argparse.ArgumentParser(description='Create datasets. Reduce size by selecting an event window from each sample.')
+    parser.add_argument('source', help='source directory containing the overall dataset')
+    parser.add_argument('--dest', help='destination file path to save the dataset and meta data', default='')
+    args = parser.parse_args()
     # Further split the training dataset into a smaller training set 
     # and a dev (test) set.
     split=0.25
-    dataset = args.dest+'/private_data_all_TRAIN.txt'
-    meta = args.dest+'/private_data_all_TRAIN_meta.txt'
-    label = 'private_data'
+    dataset = args.source+'/private_data_all_TRAIN.txt'
+    meta = args.source+'/private_data_all_TRAIN_meta.txt'
+    label = 'private_data_dev'
+    dest = args.dest+'/'+label
     split_data.split(dataset, meta, test_split=split, \
-        dest=args.dest, label=label, shuffle=False)
+        dest=dest, label=label, shuffle=False)
     # plot data
-    plotting.plot_dataset(args.dest+'/private_data_TRAIN.txt')
-    plotting.plot_dataset(args.dest+'/private_data_TEST.txt')
+    plotting.plot_dataset(dest+'/private_data_dev_TRAIN.txt')
+    plotting.plot_dataset(dest+'/private_data_dev_TEST.txt')
 
-    # Make a small training dataset for initial testing. 
-    # Like GunPoint - 50 train, 150 test.
-    # Make it a balanced dataset.
-    num_rows = 200
+    # Make a small training datasets for initial testing. 
+    dataset = dest+'/private_data_dev_TRAIN.txt'
+    meta = dest+'/private_data_dev_TRAIN_meta.txt'
+    num_samples = 200
     class_balance = 0.5
-    dataset_bal, meta_bal = split_data.create_balanced_dataset(
-        dataset, meta, num_rows, class_balance, shuffle=False)
     split=0.75 
-    mini_set_dest = args.dest+'/private_mini'
-    label = 'private_mini'
-    split_data.split_arrays(dataset_bal, meta_bal, split, 
-        mini_set_dest, label, stratify=dataset_bal[:,0])
-    plotting.plot_dataset(mini_set_dest+'/private_mini_TRAIN.txt')
-    plotting.plot_dataset(mini_set_dest+'/private_mini_TEST.txt')
+    detection_window=50 
+    window=1000 
+    threshold=0.1 
 
-    # Make a mini, balanced dataset of single dog data.
+    # Multi-dog set
+    label = 'private_mini'
+    dest = args.dest+'/'+label
+    split_data.mini_dataset(dataset, meta, \
+        num_samples=num_samples, test_split=split, class_balance=class_balance, \
+        events_only=True, \
+        event_detection_window=detection_window, event_window=window, event_threshold=threshold, \
+        dest=dest, label=label)
+    plotting.plot_dataset(dest+'/private_mini_TRAIN.txt')
+    plotting.plot_dataset(dest+'/private_mini_TEST.txt')
+
+    # Single dog set
     config = configparser.ConfigParser()
     config.optionxform=str
     config_files = ['src/public_config.ini', 'src/private_config.ini']
     config.read(config_files)
     dog = config._sections['unique_dog_names']['dog2']
-    num_rows = 200
-    test_split=0.75 
-    mini_set_dest = 'data/private_data/private_mini_dog2'
     label = 'private_mini_dog2'
-    split_data.mini_dataset(
-        dataset, meta, dog, num_rows, test_split, mini_set_dest, label)  
-    plotting.plot_dataset(mini_set_dest+'/'+label+'_TRAIN.txt')
-    plotting.plot_dataset(mini_set_dest+'/'+label+'_TEST.txt')
+    dest = args.dest+'/'+label
+    split_data.mini_dataset(dataset, meta, \
+        num_samples=num_samples, test_split=split, class_balance=class_balance, \
+        dog=dog, events_only=True, \
+        event_detection_window=detection_window, event_window=window, event_threshold=threshold, \
+        dest=dest, label=label)       
+    plotting.plot_dataset(dest+'/'+'private_mini_dog2_TRAIN.txt')
+    plotting.plot_dataset(dest+'/'+'private_mini_dog2_TEST.txt')
 
 
 if __name__ == "__main__":
-    main()
+    create_dev_datasets()

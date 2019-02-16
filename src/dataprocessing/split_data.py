@@ -35,7 +35,6 @@ def split_arrays(dataset, meta, test_split, dest='', label='', shuffle=True, str
         dataset_test_name = label + '_TEST.txt'
         meta_train_name = label + '_TRAIN_meta.txt'   
         meta_test_name = label + '_TEST_meta.txt' 
-        print('\ndataset_test:', dataset_test)   # todo lmtw remove
         manager.save_dataset_from_np(dest+'/'+dataset_train_name, dataset_train, verbose=True)
         manager.save_dataset_from_np(dest+'/'+dataset_test_name, dataset_test, verbose=True)
         manager.save_meta_from_np(dest+'/'+meta_train_name, meta_train, verbose=True)
