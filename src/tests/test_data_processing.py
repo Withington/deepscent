@@ -135,7 +135,7 @@ def test_import_data_save():
     assert(np.array_equal(loaded[i][1:cols+1], raw_loaded[1]))
 
 
-def compare_data(raw_data_path, dataset_file, meta_file, i=None):
+def compare_data_files(raw_data_path, dataset_file, meta_file, i='random'):
     ''' Compare a row from the dataset against the corresponding raw data file. 
     
     Parameters
@@ -146,15 +146,15 @@ def compare_data(raw_data_path, dataset_file, meta_file, i=None):
         An array of pressure sensor data in a txt file. One row per sample
     meta_file: str
         Meta data corresponding to the dataset in a txt file. One row per sample
-    i: int
-        index of the dataset row to test. Selected at random if None.
+    i: str
+        index of the dataset row to test. Or 'all' or 'random'.
     '''
-    dataset = manager.load_dataset_as_np(dataset_file)   
+    dataset = manager.load_dataset(dataset_file)   
     meta = manager.load_meta(meta_file)
-    compare_data_arrays(raw_data_path, dataset, meta, i)
+    compare_data(raw_data_path, dataset, meta, i)
 
 
-def compare_data_arrays(raw_data_path, dataset, meta, i=None):
+def compare_data(raw_data_path, dataset, meta, i='random'):
     ''' Compare a row from the dataset against the corresponding raw data file.
         
     The dataset may be truncated or padded compared to the raw data so
@@ -164,35 +164,43 @@ def compare_data_arrays(raw_data_path, dataset, meta, i=None):
     ----------
     raw_data_path: str
         Path to a directory of raw pressure sensor data csv files.
-    dataset: numpy array
-        An array of pressure sensor data. One row per sample
-    meta: numpy array
+    dataset: DataFrame
+        A pressure sensor dataset. One row per sample
+    meta: DataFrame
         Meta data corresponding to the dataset. One row per sample
-    i: int
-        index of the dataset row to test. Selected at random if None.
+    i: str
+        index of the dataset row to test. Or 'all' or 'random'.
     '''
     
     # Select a row in the dataset
     assert(dataset.shape[0] == meta.shape[0])
     rows = meta.shape[0]
-    if i != None:
-        assert(i<rows)
+    if i == 'all':
+        start = 0
+        end = rows
+    elif i == 'random':
+        start = np.random.randint(0,rows)
+        end = start+1
     else:
-        i = np.random.randint(0,rows)
-    raw_data_filename = meta.iloc[i]['filename']
-    # Find the corresponding raw data file and test dataset against it.
-    files = raw_data_path.rglob('**/'+raw_data_filename)
-    sensor_num = meta.iloc[i]['sensor_number']
-    count = 0
-    for f in files:
-        print('Testing row', i, 'against', f)
-        count = count+1
-        assert_that(count, equal_to(1))
-        raw_loaded = manager.load_raw_data_as_np(f)
-        compare_cols = min(raw_loaded.shape[1], dataset.shape[1]-1)
-        print('Comparing the first', compare_cols, 'columns')
-        assert(compare_cols>10)
-        assert(np.array_equal(dataset[i][1:compare_cols+1], raw_loaded[sensor_num][:compare_cols]))
+        start = int(i)
+        assert(i<rows)
+        end = start+1
+
+    for idx in range(start, end):   
+        raw_data_filename = meta.iloc[idx]['filename']
+        # Find the corresponding raw data file and test dataset against it.
+        files = raw_data_path.rglob('**/'+raw_data_filename)
+        sensor_num = meta.iloc[idx]['sensor_number']
+        count = 0
+        for f in files:
+            print('Testing row', idx, 'against', f)
+            count = count+1
+            assert_that(count, equal_to(1))
+            raw_loaded = manager.load_raw_data_as_np(f)
+            compare_cols = min(raw_loaded.shape[1], dataset.shape[1]-1)
+            print('Comparing the first', compare_cols, 'columns')
+            assert(compare_cols>10)
+            assert(np.array_equal(dataset.iloc[idx][1:compare_cols+1], raw_loaded[sensor_num][:compare_cols]))
 
 
 
@@ -202,7 +210,7 @@ def test_dataset():
     raw_data_path = Path('data/test_data/raw_data')
     dataset_file = Path('data/test_data/datasets/test_output_dataset.txt')
     meta_file = Path('data/test_data/datasets/test_output_dataset_meta.txt')
-    compare_data(raw_data_path, dataset_file, meta_file, i)
+    compare_data_files(raw_data_path, dataset_file, meta_file, i)
 
 
 def test_dataset_random():
@@ -210,7 +218,7 @@ def test_dataset_random():
     raw_data_path = Path('data/test_data/raw_data')
     dataset_file = Path('data/test_data/datasets/test_output_dataset.txt')
     meta_file = Path('data/test_data/datasets/test_output_dataset_meta.txt')
-    compare_data(raw_data_path, dataset_file, meta_file)
+    compare_data_files(raw_data_path, dataset_file, meta_file)
 
 
 def test_dataset_random_user():
@@ -224,15 +232,15 @@ def test_dataset_random_user():
     raw_data_path = Path(config.get('files', 'raw_data_dir'))
     dataset_file = Path(config.get('files', 'dataset'))
     meta_file = Path(config.get('files', 'meta'))
-    compare_data(raw_data_path, dataset_file, meta_file)
-    # Check the training set
-    dataset_file = Path(config.get('files', 'dataset_train'))
-    meta_file = Path(config.get('files', 'meta_train'))
-    compare_data(raw_data_path, dataset_file, meta_file)
     # Check the test set
     dataset_file = Path(config.get('files', 'dataset_test'))
     meta_file = Path(config.get('files', 'meta_test'))
-    compare_data(raw_data_path, dataset_file, meta_file)
+    dataset = manager.load_dataset(dataset_file)
+    meta = manager.load_meta(meta_file)
+    n = meta.shape[1]
+    compare_data(raw_data_path, dataset, meta, i=0)
+    compare_data(raw_data_path, dataset, meta, i=n-1)
+    compare_data(raw_data_path, dataset, meta, i=7)
 
 def test_split_data():
     ''' Test randomly splitting the dataset and meta data into two sets - training and test sets '''
@@ -245,7 +253,7 @@ def test_split_data():
     assert_that(expected.exists(), is_(True))
     # Compare to raw data
     raw_data_path = Path('data/test_data/raw_data')
-    compare_data(raw_data_path, dest+'/'+label+'_TRAIN.txt', dest+'/'+label+'_TRAIN_meta.txt', i=0)
+    compare_data_files(raw_data_path, dest+'/'+label+'_TRAIN.txt', dest+'/'+label+'_TRAIN_meta.txt', i=0)
 
 
 def test_split_data_reload():
@@ -260,13 +268,13 @@ def test_split_data_reload():
     raw_data_path = Path(config.get('files', 'raw_data_dir'))
     dataset_file = Path(config.get('files', 'dataset_train'))
     meta_file = Path(config.get('files', 'meta_train'))
-    compare_data(raw_data_path, dataset_file, meta_file, i)
-    compare_data(raw_data_path, dataset_file, meta_file) # Random i  
+    compare_data_files(raw_data_path, dataset_file, meta_file, i)
+    compare_data_files(raw_data_path, dataset_file, meta_file) # Random i  
     # Test the _test set
     dataset_file = Path(config.get('files', 'dataset_test'))
     meta_file = Path(config.get('files', 'meta_test'))
-    compare_data(raw_data_path, dataset_file, meta_file, i)
-    compare_data(raw_data_path, dataset_file, meta_file)  # Random i 
+    compare_data_files(raw_data_path, dataset_file, meta_file, i)
+    compare_data_files(raw_data_path, dataset_file, meta_file)  # Random i 
 
 
 def test_split_data_user():
@@ -276,20 +284,16 @@ def test_split_data_user():
     config.optionxform=str
     config_files = ['src/public_config.ini', 'src/private_config.ini', 'src/user_config.ini']
     config.read(config_files)
-    # Load training and test data and compare against original
-    i = 4
+    # Load test data and compare against original
     raw_data_path = Path(config.get('files', 'raw_data_dir'))
-    dataset_file = Path(config.get('files', 'dataset_train'))
-    meta_file = Path(config.get('files', 'meta_train'))
-    print('Testing dataset', dataset_file, 'and', meta_file)
-    compare_data(raw_data_path, dataset_file, meta_file, i)
-    compare_data(raw_data_path, dataset_file, meta_file)  # Random i 
-    # Test the _test set
     dataset_file = Path(config.get('files', 'dataset_test'))
     meta_file = Path(config.get('files', 'meta_test'))
-    print('Testing dataset', dataset_file, 'and', meta_file)
-    compare_data(raw_data_path, dataset_file, meta_file, i)
-    compare_data(raw_data_path, dataset_file, meta_file)  # Random i 
+    dataset = manager.load_dataset(dataset_file)
+    meta = manager.load_meta(meta_file)
+    n = meta.shape[1]
+    compare_data(raw_data_path, dataset, meta, i=0)
+    compare_data(raw_data_path, dataset, meta, i=n-1)
+    compare_data(raw_data_path, dataset, meta, i=5)
 
 
 def test_filter_data():
@@ -329,9 +333,7 @@ def test_remove_samples():
     dataset_file = 'data/test_data/samson/'+label+'.txt'
     meta_file = 'data/test_data/samson/'+label+'_meta.txt'
     print('Testing dataset', dataset_file, 'and', meta_file)
-    compare_data(raw_data_path, dataset_file, meta_file) 
-    for i in range(0,15):
-        compare_data(raw_data_path, dataset_file, meta_file, i=i) 
+    compare_data_files(raw_data_path, dataset_file, meta_file, i='all') 
 
 
 
@@ -348,21 +350,19 @@ def test_remove_samples_duplicate_db_rows():
     meta_np = manager.load_meta_as_np(meta_file)
 
     # Create a dummy dataset and a log relating the data to the meta file
-    log = meta_np
-    n = meta_np.shape[0]
+    meta_np_orig = meta_np
+    n = meta_np_orig.shape[0]
     dataset_np = np.array
     dataset_np = np.ones((n,20))
     for j in range(n):
         dataset_np[j] = dataset_np[j] * j
-        log[j][1] = j
 
-    # Shuffle, for thorough test
+    # Shuffle, for thorough test. Then filter.
     sklearn.utils.shuffle(dataset_np, meta_np)
-
-    # Do the filtering
     dataset_df = pd.DataFrame(dataset_np)
     meta_df = manager.meta_df_from_np(meta_np)
     filter_data.remove_samples_from_df(db_flat, dataset_df, meta_df, dest, label)
+    
     # Test 
     dataset_file = 'data/test_data/samson/'+label+'.txt'
     meta_file = 'data/test_data/samson/'+label+'_meta.txt'
@@ -373,9 +373,8 @@ def test_remove_samples_duplicate_db_rows():
 
     for j in range(meta_np.shape[0]):
         filename = meta_np[j][0]
-        d_num = int(dataset[j][0])
-        filename_in_log = log[d_num][0]
-        assert_that(filename, equal_to(filename_in_log))
+        filename_orig = meta_np_orig[int(dataset[j][0])][0]
+        assert_that(filename, equal_to(filename_orig))
 
 
 def test_create_balanced_dataset_from_arrays():
@@ -421,8 +420,8 @@ def test_create_balanced_dataset_from_arrays():
 def test_create_balanced_dataset():
     ''' Using samson data, test that the balanced dataset is created correctly '''
     raw_data_path = Path('data/test_data/samson/raw_data')
-    dataset = 'data/test_data/samson/test_filtered_dataset.txt'
-    meta = 'data/test_data/samson/test_filtered_dataset_meta.txt'
+    dataset = 'data/test_data/samson/samson_dataset.txt'
+    meta = 'data/test_data/samson/samson_dataset_meta.txt'
     num = 8
     class_balance = 0.25
     dataset = manager.load_dataset(dataset)
@@ -433,8 +432,7 @@ def test_create_balanced_dataset():
     # Check output
     assert_that(df[df[0]==0].count()[0], equal_to(num*class_balance))
     assert_that(df[df[0]==1].count()[0], equal_to(num*(1-class_balance)))
-    for i in range(0,df.shape[0]):
-        compare_data_arrays(raw_data_path, df, meta_bal, i=i) 
+    compare_data(raw_data_path, df, meta_bal, i='all') 
 
 
 def test_mini_dataset():
@@ -449,34 +447,32 @@ def test_mini_dataset():
     # Load and test
     dataset = 'data/test_data/two_dogs/samson_only_TRAIN.txt'
     meta = 'data/test_data/two_dogs/samson_only_TRAIN_meta.txt'
-    for i in range(0,4):
-        compare_data(raw_data_path, dataset, meta, i=i)
+    compare_data_files(raw_data_path, dataset, meta, i='all')
     dataset = 'data/test_data/two_dogs/samson_only_TEST.txt'
     meta = 'data/test_data/two_dogs/samson_only_TEST_meta.txt'
-    for i in range(0,4):
-        compare_data(raw_data_path, dataset, meta, i=i)
+    compare_data_files(raw_data_path, dataset, meta, i='all')
 
 
-def test_mini_dataset_window():
-    ''' Create a dog-specific, balanced, windowed, dataset '''
-    raw_data_path = Path('data/test_data/two_dogs/raw_data')
-    dataset = 'data/test_data/two_dogs/test_filtered_dataset.txt'
-    meta = 'data/test_data/two_dogs/test_filtered_dataset_meta.txt'
-    dest = 'data/test_data/two_dogs'
-    label = 'samson_events'
-    split_data.mini_dataset(dataset, meta, 8, 0.5, 0.5, \
-        dog='Samson', events_only=True, \
-        event_detection_window=10, event_window=50, event_threshold=0.1, \
-        dest=dest, label=label)
-    # Load and test
-    dataset = 'data/test_data/two_dogs/samson_events_TRAIN.txt'
-    meta = 'data/test_data/two_dogs/samson_events_TRAIN_meta.txt'
-    for i in range(0,4):
-        compare_data(raw_data_path, dataset, meta, i=i)
-    dataset = 'data/test_data/two_dogs/samson_events_TEST.txt'
-    meta = 'data/test_data/two_dogs/samson_events_TEST_meta.txt'
-    for i in range(0,4):
-        compare_data(raw_data_path, dataset, meta, i=i)
+# def test_mini_dataset_window():
+#     ''' Create a dog-specific, balanced, windowed, dataset '''
+#     raw_data_path = Path('data/test_data/two_dogs/raw_data')
+#     dataset = 'data/test_data/two_dogs/test_filtered_dataset.txt'
+#     meta = 'data/test_data/two_dogs/test_filtered_dataset_meta.txt'
+#     dest = 'data/test_data/two_dogs'
+#     label = 'samson_events'
+#     split_data.mini_dataset(dataset, meta, 8, 0.5, 0.5, \
+#         dog='Samson', events_only=True, \
+#         event_detection_window=10, event_window=50, event_threshold=0.1, \
+#         dest=dest, label=label)
+#     # Load and test
+#     dataset = 'data/test_data/two_dogs/samson_events_TRAIN.txt'
+#     meta = 'data/test_data/two_dogs/samson_events_TRAIN_meta.txt'
+#     for i in range(0,4):
+#         compare_data_files(raw_data_path, dataset, meta, i=i)
+#     dataset = 'data/test_data/two_dogs/samson_events_TEST.txt'
+#     meta = 'data/test_data/two_dogs/samson_events_TEST_meta.txt'
+#     for i in range(0,4):
+#         compare_data_files(raw_data_path, dataset, meta, i=i)
 
 
 def test_window():
@@ -489,7 +485,7 @@ def test_window():
     window_dataset = event_detection.create_window_dataset( \
         dataset, detection_window, window, threshold)
     expected = manager.load_dataset('data/test_data/datasets/random_window_dataset.txt')
-    assert(np.array_equal(window_dataset.to_numpy(), expected.to_numpy()))
+    assert(np.allclose(window_dataset, expected))
 
         
 
