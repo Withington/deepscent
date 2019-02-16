@@ -453,26 +453,21 @@ def test_mini_dataset():
     compare_data_files(raw_data_path, dataset, meta, i='all')
 
 
-# def test_mini_dataset_window():
-#     ''' Create a dog-specific, balanced, windowed, dataset '''
-#     raw_data_path = Path('data/test_data/two_dogs/raw_data')
-#     dataset = 'data/test_data/two_dogs/test_filtered_dataset.txt'
-#     meta = 'data/test_data/two_dogs/test_filtered_dataset_meta.txt'
-#     dest = 'data/test_data/two_dogs'
-#     label = 'samson_events'
-#     split_data.mini_dataset(dataset, meta, 8, 0.5, 0.5, \
-#         dog='Samson', events_only=True, \
-#         event_detection_window=10, event_window=50, event_threshold=0.1, \
-#         dest=dest, label=label)
-#     # Load and test
-#     dataset = 'data/test_data/two_dogs/samson_events_TRAIN.txt'
-#     meta = 'data/test_data/two_dogs/samson_events_TRAIN_meta.txt'
-#     for i in range(0,4):
-#         compare_data_files(raw_data_path, dataset, meta, i=i)
-#     dataset = 'data/test_data/two_dogs/samson_events_TEST.txt'
-#     meta = 'data/test_data/two_dogs/samson_events_TEST_meta.txt'
-#     for i in range(0,4):
-#         compare_data_files(raw_data_path, dataset, meta, i=i)
+def test_mini_dataset_window():
+    ''' Create a dog-specific, balanced, windowed, dataset '''
+    dataset_file = 'data/test_data/two_dogs/test_filtered_dataset.txt'
+    meta_file = 'data/test_data/two_dogs/test_filtered_dataset_meta.txt'
+    dest = 'data/test_data/two_dogs'
+    label = 'samson_events'
+    split_data.mini_dataset(dataset_file, meta_file, 8, 0.5, 0.5, \
+        dog='Samson', events_only=True, \
+        event_detection_window=10, event_window=50, event_threshold=0.1, \
+        dest=dest, label=label)
+    # Load and test
+    dataset = manager.load_dataset(dataset_file)
+    dataset_win_file = 'data/test_data/two_dogs/samson_events_TRAIN.txt'
+    dataset_win = manager.load_dataset(dataset_win_file)
+    event_detection.plot_windowing(dataset, dataset_win)
 
 
 def test_window():
