@@ -51,23 +51,29 @@ def detect_window():
         plt.show()
     
 
-def create_window_dataset(dataset, detection_window, window, threshold=None):
+def create_window_dataset(dataset, meta, detection_window, window, threshold=None):
     ''' Find the event window in each sample in the dataset. 
     Return a dataset containing these windows. '''
     n = dataset.shape[0]
     output = np.zeros((n,window+1))
     output[:,0] = dataset.iloc[:,0]
-    def f(x):
-        return find_window(x, detection_window, window, threshold)
-    output[:,1:window+1] = np.apply_along_axis(f, 1, dataset.to_numpy()[:,1:])
-    return pd.DataFrame(output)
+    meta['breakpoint0'] = 0
+    meta['breakpoint1'] = 0
+    #def f(x):
+    #    return find_window(x, detection_window, window, threshold)
+    #output[:,1:window+1], meta[0] = np.apply_along_axis(f, 1, dataset.to_numpy()[:,1:])
+    for i in range(n):
+        output[i,1:window+1], meta.iloc[i]['breakpoint0'] = \
+            find_window(dataset.to_numpy()[i,1:], detection_window, window, threshold)
+    
+    return pd.DataFrame(output), meta
 
 
 def find_window(signal, detection_window, window, threshold=None):
     ''' Find the event window in the signal and return that window '''
     breakpoints = max_energy_window(signal, detection_window, window, threshold)
     event_window = signal[breakpoints[0]:breakpoints[1]] 
-    return event_window  
+    return event_window, breakpoints[0] 
 
 
 def plot_windowing(dataset, window_dataset):
