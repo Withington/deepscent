@@ -95,26 +95,38 @@ def save_dataset_from_np(target, array, verbose=False):
 
 # Meta data ------------------------------------------------------------------------------------------
 
-def meta_header():
+def meta_header(with_breakpoints=False):
     ''' Return the header row for a meta file '''
-    return ['filename', 'date', 'time', 'dog', 'run', 'pass', 'positive_position', 'sensor_number', 'class']
+    header = ['filename', 'date', 'time', 'dog', 'run', 'pass', 'positive_position', 'sensor_number', 'class']
+    if with_breakpoints:
+        header.append('breakpoint_0')
+        header.append('breakpoint_1')
+    return header
 
-
-def meta_header_as_str():
+def meta_header_as_str(with_breakpoints=False):
     ''' Return the header row for a meta file as a single string, comma separated '''
-    return ','.join(meta_header()) 
+    return ','.join(meta_header(with_breakpoints)) 
 
+def valid_header(header):
+    return (header == meta_header() or header == meta_header(True))
+
+def has_breakpoints(array):
+    n = array.shape[1]
+    n1 = len(meta_header())
+    n2 = len(meta_header(True))
+    assert(n == n1 or n == n2), f'Array has {n} columns but expected either {n1} or {n2} columns'
+    return n == n2
 
 def load_meta(file):
     ''' Load meta data from txt file and return pandas dataframe '''
     df = pd.read_csv(Path(file), sep=',', parse_dates=['date'])
-    assert(list(df)==meta_header()), ['Unexpected header in meta file:', file]
+    assert(valid_header(list(df))), ['Unexpected header in meta file:', file]
     return df
 
 def load_meta_as_np(file):
     ''' Load meta data from txt file and return pandas dataframe '''
     df = pd.read_csv(Path(file), sep=',', parse_dates=['date'])
-    assert(list(df)==meta_header())
+    assert(valid_header(list(df))), ['Unexpected header in meta file:', file]
     return df.to_numpy()
 
 
@@ -122,7 +134,7 @@ def save_meta(target, df, verbose=False):
     ''' Save meta data dataframe to txt file '''
     file = Path(target)
     assert(file.suffix=='.txt'), ['Meta file type must be .txt, not', file.suffix]
-    assert(list(df)==meta_header())
+    assert(valid_header(list(df))), ['Unexpected header in meta file:', file]
     df.to_csv(file, index=False)
     if verbose:
         print('Saving meta data to:', file)
@@ -133,15 +145,15 @@ def save_meta_from_np(target, array, verbose=False):
     ''' Save meta data numpy array to txt file '''
     file = Path(target)   
     assert(file.suffix=='.txt'), ['Meta file type must be .txt, not', file.suffix]
-    assert(array.shape[1]==len(meta_header())), ['Array has',array.shape[1], 'columns but expected', len(meta_header()), 'columns']
     if verbose:
         print('Saving meta data from np array to:', file)
         print('Meta data shape is', array.shape)
-    np.savetxt(file, array, header=meta_header_as_str(), comments='', fmt='%s', delimiter=',')
+    header = meta_header_as_str(has_breakpoints(array))
+    np.savetxt(file, array, header=header, comments='', fmt='%s', delimiter=',')
 
 
 def meta_df_from_np(array):
     ''' Create a pandas DataFrame from a numpy array of meta data '''
-    assert(array.shape[1]==len(meta_header())), f'Array has {array.shape[1]} columns but expected {len(meta_header())} columns'
-    return pd.DataFrame(array, columns=meta_header())
+    header = meta_header(has_breakpoints(array))
+    return pd.DataFrame(array, columns=header)
 

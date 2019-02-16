@@ -114,8 +114,8 @@ def mini_dataset(dataset_file, meta_file, \
 
     # Reduce samples to the event window
     if events_only:
-        dataset = event_detection.create_window_dataset( \
-            dataset, event_detection_window, event_window, event_threshold)
+        dataset, meta = event_detection.create_window_dataset( \
+            dataset, meta, event_detection_window, event_window, event_threshold)
 
     # Split in to training and test sets, maintaining the balanace
     split_arrays(dataset, meta, test_split, 

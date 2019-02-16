@@ -14,7 +14,7 @@ from dataprocessing import import_data
 from dataprocessing import filter_data
 from dataprocessing import split_data
 from dataprocessing import manager
-from dataprocessing import event_detection
+
 
 def test_position():
     file_name = '2017_11_06-11_42-Rex_1_1_T1.csv'
@@ -201,7 +201,6 @@ def compare_data(raw_data_path, dataset, meta, i='random'):
             print('Comparing the first', compare_cols, 'columns')
             assert(compare_cols>10)
             assert(np.array_equal(dataset.iloc[idx][1:compare_cols+1], raw_loaded[sensor_num][:compare_cols]))
-
 
 
 def test_dataset():
@@ -453,37 +452,6 @@ def test_mini_dataset():
     compare_data_files(raw_data_path, dataset, meta, i='all')
 
 
-# def test_mini_dataset_window():
-#     ''' Create a dog-specific, balanced, windowed, dataset '''
-#     dataset_file = 'data/test_data/two_dogs/test_filtered_dataset.txt'
-#     meta_file = 'data/test_data/two_dogs/test_filtered_dataset_meta.txt'
-#     dest = 'data/test_data/two_dogs'
-#     label = 'samson_events'
-#     split_data.mini_dataset(dataset_file, meta_file, 8, 0.5, 0.5, \
-#         dog='Samson', events_only=True, \
-#         event_detection_window=10, event_window=50, event_threshold=0.1, \
-#         dest=dest, label=label)
-#     # Load and test
-#     dataset = manager.load_dataset(dataset_file)
-#     dataset_win_file = 'data/test_data/two_dogs/samson_events_TRAIN.txt'
-#     dataset_win = manager.load_dataset(dataset_win_file)
-#     event_detection.plot_windowing(dataset, dataset_win)
-
-
-def test_window():
-    ''' Find the event window in a data sample '''
-    dataset_file = 'data/test_data/datasets/random_dataset.txt'
-    dataset = manager.load_dataset(dataset_file)
-    detection_window = 50
-    window = 200
-    threshold = 0.1
-    meta = pd.DataFrame(np.zeros((dataset.shape[0],1)))
-    window_dataset, meta = event_detection.create_window_dataset( \
-        dataset, meta, detection_window, window, threshold)
-    expected = manager.load_dataset('data/test_data/datasets/random_window_dataset.txt')
-    assert(np.allclose(window_dataset, expected))
-    # assert(meta.shape[1]==1)
-    # assert_that(meta.iloc[0]['breakpoint0'], equal_to(3))
 
         
 
