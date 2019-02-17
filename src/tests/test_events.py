@@ -37,7 +37,9 @@ def test_window():
 def compare_data(dataset_orig, meta_orig, dataset, meta, i):
     orig_row = event_detection.get_original_row(i, meta, meta_orig)
     signal = dataset_orig.to_numpy()[orig_row][1:]
-    breakpoints = [meta.loc[i, 'breakpoint_0'], meta.loc[i, 'breakpoint_1']]
+    b0 = meta.columns.get_loc('breakpoint_0')
+    b1 = meta.columns.get_loc('breakpoint_1')
+    breakpoints = [meta.iloc[i][b0], meta.iloc[i][b1]]
     b0 = breakpoints[0]
     b1 = breakpoints[1]
     window = dataset.iloc[i][1:]    

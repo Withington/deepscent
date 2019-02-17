@@ -33,7 +33,7 @@ def plot_window_dataset(dataset_orig, meta_orig, dataset, meta, index=None):
     for i in range(start, end):
         orig_row = get_original_row(i, meta, meta_orig)
         signal = dataset_orig.to_numpy()[orig_row][1:]
-        breakpoints = [meta.loc[i, 'breakpoint_0'], meta.loc[i, 'breakpoint_1']]
+        breakpoints = [meta.iloc[i, 'breakpoint_0'], meta.iloc[i, 'breakpoint_1']]
         rpt.show.display(signal, breakpoints, breakpoints, figsize=(10, 6))
         plt.suptitle('Original data. Sample '+str(i))
         plt.ylim(0, 2.5)
@@ -60,11 +60,13 @@ def create_window_dataset(
     output[:, 0] = dataset.iloc[:, 0]
     meta['breakpoint_0'] = 0
     meta['breakpoint_1'] = 0
+    b0 = meta.columns.get_loc('breakpoint_0')
+    b1 = meta.columns.get_loc('breakpoint_1')
     for i in range(n):
         output[i, 1:window+1], breakpoints = find_window(
             dataset.to_numpy()[i, 1:], detection_window, window, threshold)
-        meta.loc[i, 'breakpoint_0'] = breakpoints[0]
-        meta.loc[i, 'breakpoint_1'] = breakpoints[1]
+        meta.iloc[i, b0] = breakpoints[0]
+        meta.iloc[i, b1] = breakpoints[1]
     return pd.DataFrame(output), meta
 
 
