@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from pathlib import Path
+import argparse
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,51 +9,60 @@ import pandas as pd
 
 import ruptures as rpt
 
-from dataprocessing import manager
+from . import manager
 
-   
+
 def get_original_row(i, meta, meta_orig):
     ''' Return the row index in meta_orig that corresponds to row i in meta '''
     filename = meta_orig.filename == meta.iloc[i]['filename'] 
     sensor = meta_orig.sensor_number == meta.iloc[i]['sensor_number']
     condition = filename & sensor
-    assert(meta_orig[condition].shape[0] == 1)
+    assert(meta_orig[condition].shape[0] == 1), \
+        f'Could not find {filename} and sensor {sensor} in the original meta data file.'
     label = meta_orig[condition].iloc[-1].name
     i = meta_orig.index.get_loc(label)
     return i
 
 
-def plot_window_dataset(dataset_orig, meta_orig, dataset, meta):
-    ''' Plot the original signal and the breakpoints '''
-    for i in range(dataset.shape[0]):
+def plot_window_dataset(dataset_orig, meta_orig, dataset, meta, index=None):
+    ''' Plot the original signal and the breakpoints.
+    Plot the windowed dataset
+    '''
+    start = index if index else 0
+    end = index+1 if index else dataset.shape[0]
+    for i in range(start, end):
         orig_row = get_original_row(i, meta, meta_orig)
         signal = dataset_orig.to_numpy()[orig_row][1:]
         breakpoints = [meta.loc[i, 'breakpoint_0'], meta.loc[i, 'breakpoint_1']]
         rpt.show.display(signal, breakpoints, breakpoints, figsize=(10, 6))
         plt.suptitle('Original data. Sample '+str(i))
+        plt.ylim(0, 2.5)
         plt.show()
         rpt.show.display(signal, breakpoints, breakpoints, figsize=(10, 6))
         plt.xlim(breakpoints[0]-50, breakpoints[1]+50)
+        plt.ylim(0, 2.5)
         plt.suptitle('Zoom in on original data window '+str(i))
         plt.show()
         dataset.iloc[i][1:].plot(figsize=(10, 6))
         plt.xlim(-50, dataset.shape[1]+50)
+        plt.ylim(0, 2.5)
         plt.suptitle('The window dataset '+str(i))
         plt.show()
 
 
-def create_window_dataset(dataset, meta, detection_window, window, threshold=None):
-    ''' Find the event window in each sample in the dataset. 
-    Return a dataset containing these windows and add the two breakpoints to 
+def create_window_dataset(
+        dataset, meta, detection_window, window, threshold=None):
+    ''' Find the event window in each sample in the dataset.
+    Return a dataset containing these windows and add the two breakpoints to
     the meta data '''
     n = dataset.shape[0]
-    output = np.zeros((n,window+1))
-    output[:,0] = dataset.iloc[:,0]
+    output = np.zeros((n, window+1))
+    output[:, 0] = dataset.iloc[:, 0]
     meta['breakpoint_0'] = 0
     meta['breakpoint_1'] = 0
     for i in range(n):
-        output[i,1:window+1], breakpoints = \
-            find_window(dataset.to_numpy()[i,1:], detection_window, window, threshold)
+        output[i, 1:window+1], breakpoints = find_window(
+            dataset.to_numpy()[i, 1:], detection_window, window, threshold)
         meta.loc[i, 'breakpoint_0'] = breakpoints[0]
         meta.loc[i, 'breakpoint_1'] = breakpoints[1]
     return pd.DataFrame(output), meta
@@ -61,21 +70,23 @@ def create_window_dataset(dataset, meta, detection_window, window, threshold=Non
 
 def find_window(signal, detection_window, window, threshold=None):
     ''' Find the event window in the signal and return that window '''
-    breakpoints = max_energy_window(signal, detection_window, window, threshold)
+    breakpoints = max_energy_window(
+        signal, detection_window, window, threshold)
     event_window = signal[breakpoints[0]:breakpoints[1]] 
     return event_window, breakpoints
 
 
 def max_energy_window(signal, detection_window, window, threshold=None):
-    ''' Find the detection_window of maxium energy, or the first detection_window that
-    has energy over the given threshold. Return a window which contains 
-    this detection_window on its left. '''
+    ''' Find the detection_window of maxium energy, or the first
+    detection_window that has energy over the given threshold.
+    Return a window which contains this detection_window on its left.
+    '''
     assert(detection_window <= window)
     assert(window <= signal.shape[0])
     n = signal.shape[0]
     max = 0
     t_max = 0
-    for t0 in range(0,n-window):
+    for t0 in range(0, n-window):
         energy = signal[t0:t0+detection_window].sum()
         if energy > max:
             max = energy
@@ -85,3 +96,27 @@ def max_energy_window(signal, detection_window, window, threshold=None):
     breakpoints = [t_max, t_max+window]
     return breakpoints
 
+
+def main():
+    parser = argparse.ArgumentParser(description='Plot the original signal and the \
+        breakpoints. Plot the windowed dataset')
+    parser.add_argument('dataset', help='input path to a dataset txt file')
+    parser.add_argument('window', help='input path to a windowed dataset txt \
+        file')
+    parser.add_argument('--index', type=int, help='index of the sample of interest. \
+        Plot all if not set', default=None)
+    args = parser.parse_args()
+    meta = Path(
+        Path(args.dataset).parent, (Path(args.dataset).stem + '_meta.txt'))
+    window_meta = Path(
+        Path(args.window).parent, (Path(args.window).stem + '_meta.txt'))
+    # Load data
+    dataset = manager.load_dataset(args.dataset)
+    meta = manager.load_meta(meta)
+    window_dataset = manager.load_dataset(args.window)
+    window_meta = manager.load_meta(window_meta)
+    plot_window_dataset(dataset, meta, window_dataset, window_meta, args.index)
+
+
+if __name__ == "__main__":
+    main()

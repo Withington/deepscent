@@ -1,6 +1,4 @@
-
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from pathlib import Path
 import argparse
@@ -9,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from dataprocessing import manager
+from . import manager
 
 def plot_file(input):
     ''' Plot the data in a single raw data csv file. '''

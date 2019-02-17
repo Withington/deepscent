@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from pathlib import Path
 import argparse
@@ -12,12 +11,14 @@ import sklearn.utils
 from dataprocessing import manager
 from dataprocessing import event_detection
 
+
 def split(dataset_file, meta_file, test_split, dest='', label='', shuffle=True, stratify=None):
     ''' Split the dataset and corresponding meta into train and test sets.
     Save to dest. '''
     dataset = manager.load_dataset_as_np(dataset_file)
     meta = manager.load_meta_as_np(meta_file)
     split_arrays(dataset, meta, test_split, dest, label, shuffle, stratify)
+
 
 def split_arrays(dataset, meta, test_split, dest='', label='', shuffle=True, stratify=None):
     ''' Split the dataset and corresponding meta into train and test sets.
