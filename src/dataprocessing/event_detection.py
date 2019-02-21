@@ -51,52 +51,68 @@ def plot_window_dataset(dataset_orig, meta_orig, dataset, meta, index=None):
 
 
 def create_window_dataset(
-        dataset, meta, detection_window, window, threshold=None):
+        dataset, meta, detection_window, window, threshold=None, drop=False):
     ''' Find the event window in each sample in the dataset.
     Return a dataset containing these windows and add the two breakpoints to
-    the meta data '''
+    the meta data.
+    Drop rows with no event, if drop is True '''
     n = dataset.shape[0]
     output = np.zeros((n, window+1))
     output[:, 0] = dataset.iloc[:, 0]
-    meta['breakpoint_0'] = 0
-    meta['breakpoint_1'] = 0
-    b0 = meta.columns.get_loc('breakpoint_0')
-    b1 = meta.columns.get_loc('breakpoint_1')
+    meta_win = pd.DataFrame(meta)
+    meta_win['breakpoint_0'] = 0
+    meta_win['breakpoint_1'] = 0
+    b0 = meta_win.columns.get_loc('breakpoint_0')
+    b1 = meta_win.columns.get_loc('breakpoint_1')
+    no_event = list()
     for i in range(n):
-        output[i, 1:window+1], breakpoints = find_window(
-            dataset.to_numpy()[i, 1:], detection_window, window, threshold)
-        meta.iloc[i, b0] = breakpoints[0]
-        meta.iloc[i, b1] = breakpoints[1]
-    return pd.DataFrame(output), meta
+        output[i, 1:window+1], breakpoints, has_event = \
+            find_window(dataset.to_numpy()[i, 1:], 
+                        detection_window, window, threshold)
+        meta_win.iloc[i, b0] = breakpoints[0]
+        meta_win.iloc[i, b1] = breakpoints[1]
+        if not has_event:
+            no_event.append(i)
+
+    output = pd.DataFrame(output)
+    meta_win.reset_index(inplace=True, drop=True)
+    if drop:
+        output.drop(no_event, axis=0, inplace=True)
+        meta_win.drop(no_event, axis=0, inplace=True)
+    return output, meta_win
 
 
 def find_window(signal, detection_window, window, threshold=None):
     ''' Find the event window in the signal and return that window '''
-    breakpoints = max_energy_window(
+    breakpoints, has_event = max_energy_window(
         signal, detection_window, window, threshold)
     event_window = signal[breakpoints[0]:breakpoints[1]] 
-    return event_window, breakpoints
+    return event_window, breakpoints, has_event
 
 
 def max_energy_window(signal, detection_window, window, threshold=None):
     ''' Find the detection_window of maxium energy, or the first
     detection_window that has energy over the given threshold.
     Return a window which contains this detection_window on its left.
+    Return has_event = True if there is a detection window that
+    exceeds the threshold.
     '''
     assert(detection_window <= window)
     assert(window <= signal.shape[0])
     n = signal.shape[0]
     max = 0
     t_max = 0
+    has_event = False
     for t0 in range(0, n-window):
         energy = signal[t0:t0+detection_window].sum()
         if energy > max:
             max = energy
             t_max = t0
             if threshold and (max > threshold*detection_window):
+                has_event = True
                 break
     breakpoints = [t_max, t_max+window]
-    return breakpoints
+    return breakpoints, has_event
 
 
 def main():

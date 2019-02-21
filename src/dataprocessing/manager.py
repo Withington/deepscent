@@ -102,12 +102,15 @@ def meta_header(with_breakpoints=False):
         header.append('breakpoint_1')
     return header
 
+
 def meta_header_as_str(with_breakpoints=False):
     ''' Return the header row for a meta file as a single string, comma separated '''
     return ','.join(meta_header(with_breakpoints)) 
 
+
 def valid_header(header):
     return (header == meta_header() or header == meta_header(True))
+
 
 def has_breakpoints(array):
     n = array.shape[1]
@@ -115,6 +118,7 @@ def has_breakpoints(array):
     n2 = len(meta_header(True))
     assert(n == n1 or n == n2), f'Array has {n} columns but expected either {n1} or {n2} columns'
     return n == n2
+
 
 def load_meta(file):
     ''' Load meta data from txt file and return pandas dataframe '''
@@ -156,3 +160,31 @@ def meta_df_from_np(array):
     header = meta_header(has_breakpoints(array))
     return pd.DataFrame(array, columns=header)
 
+
+# Join dataset and meta
+
+def join(dataset, meta):
+    ''' Join a dataset to its meta and return the new data_meta '''
+    assert(dataset.shape[0] == meta.shape[0])
+    assert(meta.valid_header())
+    meta.reset_index(inplace=True)
+    dataset.reset_index(inplace=True)
+    data_meta = pd.concat([meta, dataset], axis=1)
+    assert(data_meta.shape[0] == dataset.shape[0])
+    return data_meta
+
+
+def split(data_meta):
+    ''' Split a data_meta back out into dataset and meta '''
+    cols = data_meta.columns
+    header = meta_header()
+    header_b = meta_header(with_breakpoints=True)
+    if (cols[:len(header)] == header):
+        meta = data_meta[header]
+        dataset = data_meta[data_meta.columns.difference(header)]
+    elif (cols[:len(header_b)] == header_b):
+        meta = data_meta[data_meta(columns=header_b)]
+        dataset = data_meta[data_meta.columns.difference(header_b)]
+    else:
+        raise('data_meta cannot be split')
+    return dataset, meta
