@@ -166,9 +166,7 @@ def meta_df_from_np(array):
 def join(dataset, meta):
     ''' Join a dataset to its meta and return the new data_meta '''
     assert(dataset.shape[0] == meta.shape[0])
-    assert(meta.valid_header())
-    meta.reset_index(inplace=True)
-    dataset.reset_index(inplace=True)
+    assert(valid_header(list(meta)))
     data_meta = pd.concat([meta, dataset], axis=1)
     assert(data_meta.shape[0] == dataset.shape[0])
     return data_meta
@@ -176,15 +174,15 @@ def join(dataset, meta):
 
 def split(data_meta):
     ''' Split a data_meta back out into dataset and meta '''
-    cols = data_meta.columns
+    cols = list(data_meta)
     header = meta_header()
     header_b = meta_header(with_breakpoints=True)
-    if (cols[:len(header)] == header):
+    if (cols[:len(header_b)] == header_b):
+        meta = data_meta[header_b]
+        dataset = data_meta[data_meta.columns.difference(header_b)]
+    elif (cols[:len(header)] == header):
         meta = data_meta[header]
         dataset = data_meta[data_meta.columns.difference(header)]
-    elif (cols[:len(header_b)] == header_b):
-        meta = data_meta[data_meta(columns=header_b)]
-        dataset = data_meta[data_meta.columns.difference(header_b)]
     else:
-        raise('data_meta cannot be split')
+        raise Exception('data_meta cannot be split')
     return dataset, meta

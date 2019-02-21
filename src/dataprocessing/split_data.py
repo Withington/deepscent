@@ -52,6 +52,7 @@ def create_balanced_dataset(dataset, meta, num, class_balance, shuffle=True):
     meta_bal = manager.meta_df_from_np(meta_bal)    
     return dataset_bal, meta_bal
 
+
 def create_balanced_dataset_from_arrays(dataset, meta, num, class_balance, shuffle=True):
     ''' Create a dataset of the given number of rows and with the given
     class balance between the two classes. Return the balanced dataset 
@@ -124,13 +125,9 @@ def mini_dataset(dataset_file, meta_file, \
 
 def dataset_for_dog(dataset, meta, dog):
     ''' Return dataset and meta data for the given dog '''
-    assert(dataset.shape[0] == meta.shape[0])
-    n_meta = meta.shape[1]
-    df = pd.concat([meta, dataset], axis=1, join_axes=[meta.index])
-    assert(df.shape[0] == meta.shape[0])
+    df = manager.join(dataset, meta)
     df = df[df.dog == dog]
-    dog_meta_df = df.iloc[:,:n_meta]
-    dog_df = df.iloc[:,n_meta:]
+    dog_df, dog_meta_df = manager.split(df)
     return dog_df, dog_meta_df
 
 

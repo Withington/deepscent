@@ -76,6 +76,14 @@ def test_drop_no_event():
     meta = manager.load_meta(meta_file) 
     dataset_win, meta_win = event_detection.create_window_dataset(
         dataset, meta, detection_window=50, window=1000, threshold=0.1, drop=True)
+
+    do_save = False
+    if do_save:
+        dataset_file = 'data/test_data/thirty/events/events.txt'
+        meta_file = 'data/test_data/thirty/events/events_meta.txt'
+        manager.save_dataset(dataset_file, dataset_win)
+        manager.save_meta(meta_file, meta_win)
+
     # Expect certain rows to have been dropped
     expected = pd.DataFrame([
         ['2017_08_14-12_12_Samson_12_2_B.csv', 2],
