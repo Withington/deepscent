@@ -134,10 +134,6 @@ def dataset_for_dog(dataset, meta, dog):
     return dog_df, dog_meta_df
 
 
-
-
-
-
 def main():
     parser = argparse.ArgumentParser(description='Split a dataset into training and test datasets')
     parser.add_argument('input_file', help='input dataset txt file')

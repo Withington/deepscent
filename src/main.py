@@ -5,10 +5,13 @@ import argparse
 import configparser
 
 from dataprocessing import class_info
-from dataprocessing import import_data
+from dataprocessing import event_detection
 from dataprocessing import filter_data
-from dataprocessing import split_data
+from dataprocessing import import_data
+from dataprocessing import manager
 from dataprocessing import plotting
+from dataprocessing import split_data
+from tests import test_events
 
 
 def create_dataset():
@@ -47,7 +50,49 @@ def create_dataset():
     plotting.plot_dataset(output_dest+'/private_data_all_TEST.txt')
 
 
+def create_window_dataset():
+    ''' Remove all samples where no event is detected and create sample windows '''
+    parser = argparse.ArgumentParser(description='Remove all samples where no event is detected and create sample windows')
+    parser.add_argument('source', help='source directory containing the overall dataset')
+    parser.add_argument('--dest', help='destination file path to save the dataset and meta data', default='')
+    args = parser.parse_args()
+
+    # Load original dataset
+    dataset_file = args.source+'/private_data_all.txt'
+    meta_file = args.source+'/private_data_all_meta.txt'
+    label = 'private_data_events'
+    dataset = manager.load_dataset(dataset_file)
+    meta = manager.load_meta(meta_file) 
+
+    # Select event windows, remove samples with no event
+    dataset_win, meta_win = event_detection.create_window_dataset(
+        dataset, meta, detection_window=50, window=1000, threshold=0.1, drop=True)
+    if args.dest:
+        dataset_file = args.dest+'/'+label+'.txt'
+        meta_file = args.dest+'/'+label+'_meta.txt'
+        manager.save_dataset(dataset_file, dataset_win, verbose=True)
+        manager.save_meta(meta_file, meta_win, verbose=True)
+    # plot data
+    plotting.plot_dataset(dataset_file)
+
+    # Test that window data can be compared back to original data
+    n = dataset_win.shape[0]
+    test_events.compare_data(dataset, meta, dataset_win, meta_win, i=round(n/3))
+    test_events.compare_data(dataset, meta, dataset_win, meta_win, i=round(2*n/3))
+    test_events.compare_data(dataset, meta, dataset_win, meta_win, i=n-1)
+    print('Test successful')
+
+    # Split the windowed dataset into a training set and a test set.
+    split = 0.2
+    split_data.split(dataset_file, meta_file, test_split=split,
+        dest=args.dest, label=label)
+    # plot data
+    plotting.plot_dataset(args.dest+'/private_data_events_TRAIN.txt')
+    plotting.plot_dataset(args.dest+'/private_data_events_TEST.txt')
+
+
 def create_dev_datasets():
+    ''' Create focused datasets, for development work '''
     parser = argparse.ArgumentParser(description='Create datasets. Reduce size by selecting an event window from each sample.')
     parser.add_argument('source', help='source directory containing the overall dataset')
     parser.add_argument('--dest', help='destination file path to save the dataset and meta data', default='')
@@ -104,4 +149,4 @@ def create_dev_datasets():
 
 
 if __name__ == "__main__":
-    create_dev_datasets()
+    create_window_dataset()
