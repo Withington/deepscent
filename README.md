@@ -40,9 +40,10 @@ Run the Docker container, mount volumes and launch Jupyter Notebook.
 ```
 docker run --runtime=nvidia -it \
 --name deepscent \
--v "$(pwd)"/notebooks:/notebooks/deepscent/notebooks \
--v "$(pwd)"/data:/notebooks/deepscent/data:ro \
--v "$(pwd)"/logs:/notebooks/deepscent/logs \
+-u $(id -u):$(id -g) \
+-v "$(pwd)"/notebooks:/tf/notebooks/deepscent/notebooks \
+-v "$(pwd)"/data:/tf/notebooks/deepscent/data:ro \
+-v "$(pwd)"/logs:/tf/notebooks/deepscent/logs \
 -p 8888:8888 deepscent_gpu
 ```
 This returns a URL where you can open the Jupyter Notebook. Navigate 
@@ -57,9 +58,10 @@ docker build -t deepscent_cpu dockerfiles/deepscent_cpu
 ```
 docker run -it \
 --name deepscent \
--v "$(pwd)"/notebooks:/notebooks/deepscent/notebooks \
--v "$(pwd)"/data:/notebooks/deepscent/data:ro \
--v "$(pwd)"/logs:/notebooks/deepscent/logs \
+-u $(id -u):$(id -g) \
+-v "$(pwd)"/notebooks:/tf/notebooks/deepscent/notebooks \
+-v "$(pwd)"/data:/tf/notebooks/deepscent/data:ro \
+-v "$(pwd)"/logs:/tf/notebooks/deepscent/logs \
 -p 8888:8888 deepscent_cpu
 ```
 
