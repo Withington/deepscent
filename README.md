@@ -45,7 +45,7 @@ docker run --runtime=nvidia -it \
 -v "$(pwd)"/logs:/notebooks/deepscent/logs \
 -p 8888:8888 deepscent_gpu
 ```
-This returns a ULR where you can open the Jupyter Notebook. Navigate 
+This returns a URL where you can open the Jupyter Notebook. Navigate 
 to notebooks/deepscent/notebooks and open mlp.ipynb.
 
 ## Alternative - run on CPU
