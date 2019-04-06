@@ -357,7 +357,7 @@ def test_remove_samples_duplicate_db_rows():
         dataset_np[j] = dataset_np[j] * j
 
     # Shuffle, for thorough test. Then filter.
-    sklearn.utils.shuffle(dataset_np, meta_np)
+    dataset_np, meta_np = sklearn.utils.shuffle(dataset_np, meta_np)
     dataset_df = pd.DataFrame(dataset_np)
     meta_df = manager.meta_df_from_np(meta_np)
     filter_data.remove_samples_from_df(db_flat, dataset_df, meta_df, dest, label)
