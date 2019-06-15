@@ -81,15 +81,12 @@ def test_class_info():
     assert_that(good.shape, equal_to((8,6)))
     assert_that(skipped.shape, equal_to((6,2)))
     # Test contents of one row.
-    file0 = good.at[0,'file']
-    assert_that(file0.name, equal_to('2017_11_06-11_52-Rex_1_1_T1_.csv'))
-    assert(good.at[0,'dog'] == 'Rex')
-    assert(good.at[0,'run'] == 1)
-    assert(good.at[0,'pass'] == 1)
-    assert(good.at[0,'position'] == 'T1')
-    time = good.at[0,'timestamp']
-    expected = datetime.datetime(2017, 11, 6, 11, 52)
-    assert_that(time, equal_to(expected))
+    test_file = good[good['timestamp']==datetime.datetime(2017, 11, 6, 11, 52)]
+    assert_that(test_file['file'][0].name, equal_to('2017_11_06-11_52-Rex_1_1_T1_.csv'))
+    assert(test_file['dog'].all() == 'Rex')
+    assert(test_file['run'].all() == 1)
+    assert(test_file['pass'].all() == 1)
+    assert(test_file['position'].all() == 'T1')
 
 
 def test_raw_data_size():
