@@ -81,7 +81,9 @@ def test_class_info():
     assert_that(good.shape, equal_to((8,6)))
     assert_that(skipped.shape, equal_to((6,2)))
     # Test contents of one row.
+    print(good.head())
     test_file = good[good['timestamp']==datetime.datetime(2017, 11, 6, 11, 52)]
+    print(test_file)
     assert_that(test_file['file'][0].name, equal_to('2017_11_06-11_52-Rex_1_1_T1_.csv'))
     assert(test_file['dog'].all() == 'Rex')
     assert(test_file['run'].all() == 1)
