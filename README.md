@@ -24,6 +24,13 @@ Classification Repository](http://www.timeseriesclassification.com
  
 
 # How to run locally
+
+The recommended way to run Deepscent is to use Colab. Use the 
+'Open in Colab' buttons above. To run on GPU go to 
+'Runtime', 'change runtime type' and set 'Hardware accelerator' to GPU.
+
+Alternatively, follow the guide below to run locally.
+
 ## Prerequisites
 TensorFlow - For GPU support, TensorFlow recommends using their Docker 
 image to simplify installation and avoid library conflicts (Linux only).
