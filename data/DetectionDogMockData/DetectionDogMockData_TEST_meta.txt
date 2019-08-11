@@ -1,0 +1,6 @@
+filename,date,time,dog,run,pass,positive_position,sensor_number,class,breakpoint_0,breakpoint_1
+2017_09_04-11_52_Samson_7_1_T1.csv,2017-09-04,11:52:00,Samson,7,1,T1,2,0,8843,9843
+2017_09_28-13_54-Samson_14_1_T2.csv,2017-09-28,13:54:00,Samson,14,1,T2,0,0,378,1378
+2017_09_28-13_39-Samson_5_1_T1.csv,2017-09-28,13:39:00,Samson,5,1,T1,0,1,252,1252
+2017_09_04-11_08_Samson_16_1_B.csv,2017-09-04,11:08:00,Samson,16,1,B,0,0,623,1623
+2017_08_14-14_15_Samson_10_3_T2.csv,2017-08-14,14:15:00,Samson,10,3,T2,2,0,1932,2932
