@@ -3,6 +3,7 @@
 import os
 import argparse
 import configparser
+import pathlib
 
 from dataprocessing import class_info
 from dataprocessing import event_detection
@@ -148,6 +149,6 @@ def create_dev_datasets():
     plotting.plot_dataset(dest+'/'+'private_mini_dog2_TRAIN.txt')
     plotting.plot_dataset(dest+'/'+'private_mini_dog2_TEST.txt')
 
+
+if __name__ == "__main__":
     create_window_dataset()
-    #create_window_dataset()
-    create_dev_datasets()
