@@ -72,8 +72,10 @@ def create_window_dataset():
         dataset, meta, detection_window=detection_window, 
         window=window, threshold=threshold, drop=True)
     if args.dest:
-        dataset_file = args.dest+'/'+label+'/'+label+'.txt'
-        meta_file = args.dest+'/'+label+'/'+label+'_meta.txt'
+        dest_dir = args.dest+'/'+label
+        pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True) 
+        dataset_file = dest_dir+'/'+label+'.txt'
+        meta_file = dest_dir+'/'+label+'_meta.txt'
         manager.save_dataset(dataset_file, dataset_win, verbose=True)
         manager.save_meta(meta_file, meta_win, verbose=True)
     # plot data
@@ -146,8 +148,6 @@ def create_dev_datasets():
     plotting.plot_dataset(dest+'/'+'private_mini_dog2_TRAIN.txt')
     plotting.plot_dataset(dest+'/'+'private_mini_dog2_TEST.txt')
 
-
-if __name__ == "__main__":
-    #create_dataset()
+    create_window_dataset()
     #create_window_dataset()
     create_dev_datasets()
