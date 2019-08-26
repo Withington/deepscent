@@ -47,4 +47,4 @@ def test_deepscent_dev_notebook():
 
 
 if __name__ == "__main__":
-    test_ipynb()
+    test_deepscent_notebook()
