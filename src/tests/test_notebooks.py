@@ -16,7 +16,7 @@ def notebook_run(path):
     with tempfile.NamedTemporaryFile(suffix=".ipynb") as fout:
         args = ["jupyter", "nbconvert", "--to", "notebook", "--execute",
           "--ExecutePreprocessor.kernel_name=travis_env",
-          "--ExecutePreprocessor.timeout=60",
+          "--ExecutePreprocessor.timeout=240",
           "--output", fout.name, path]
 
 
@@ -32,9 +32,17 @@ def notebook_run(path):
     return nb, errors
 
 
-def test_ipynb():
+def test_deepscent_notebook():
+    ''' Run notebook and check for errors '''
     print('Current working directory is', os.getcwd())
     __, errors = notebook_run('notebooks/deepscent.ipynb')
+    assert errors == []
+
+
+def test_deepscent_dev_notebook():
+    ''' Run notebook and check for errors '''
+    print('Current working directory is', os.getcwd())
+    __, errors = notebook_run('notebooks/deepscent_dev.ipynb')
     assert errors == []
 
 
